@@ -540,7 +540,7 @@ function loadSAP(wb){
   const rows=XLSX.utils.sheet_to_json(ws,{header:1}); const out=[]
   for(let i=1;i<rows.length;i++){
     const r=rows[i];if(!r||r.length<14)continue
-    const mat=String(r[0]||'').trim(),desc=String(r[1]||'').trim(),po=String(r[2]||'').trim(),qty=parseFloat(r[3])||0
+    const mat=String(r[0]||'').trim(),desc=String(r[1]||'').trim(),po=String(r[8]||'').trim(),qty=parseFloat(r[13])||0
     if(!mat||!po)continue;const poNorm=normalizePO(po)
     if(!poNorm||poNorm.length!==10)continue;if(poNorm.startsWith('62'))continue
     out.push({product_description:desc,purchasing_document:po,open_qty:qty,normalized_po:poNorm,agi_key:mat.replace(/^0+/,'')})
@@ -556,7 +556,7 @@ function loadTracker(wb){
     if(!poNorm||poNorm.length!==10)continue
     let partialNo=null;const dashM=rawPo.match(/-\s*(\d+)$/);if(dashM)partialNo=dashM[1]
     const p=(i)=>parseDate(r[i])
-    out.push({tracker_overall_status:os,normalized_po:poNorm,partial_shipment_no:partialNo,lc_date:p(11),si_shared_date:p(12),tracker_rdd:p(13),tracker_etd:p(14),tracker_eta:p(15),obl_ebl_received_date:p(17),final_docs_received_date:p(18)})
+    out.push({tracker_overall_status:os,normalized_po:poNorm,partial_shipment_no:partialNo,lc_date:p(11),si_shared_date:p(12),tracker_rdd:p(13),tracker_etd:p(14),tracker_eta:p(15),obl_ebl_received_date:p(18),final_docs_received_date:p(19)})
   }
   _data.tracker=out
 }
