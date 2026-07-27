@@ -1,831 +1,814 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Import Control Tower</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0a0e17;--surface:#111827;--surface2:#1e293b;--surface3:#334155;
-  --border:#2d3a50;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
-  --accent:#3b82f6;--accent2:#60a5fa;--green:#22c55e;--yellow:#eab308;
-  --orange:#f97316;--red:#ef4444;--purple:#a855f7;--cyan:#06b6d4
+/* ============ THEME TOKENS ============ */
+[data-theme="dark"]{
+  --bg-deep:#06080f;--bg-base:#0a0e17;--bg-elevated:#111827;--bg-card:#1a2332;
+  --bg-surface:rgba(30,41,59,.6);--border:rgba(45,58,80,.5);--border-light:rgba(45,58,80,.25);
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --primary:#3b82f6;--primary-glow:rgba(59,130,246,.15);--primary-light:#60a5fa;
+  --accent:#f97316;--accent-glow:rgba(249,115,22,.12);
+  --green:#22c55e;--yellow:#eab308;--orange:#f97316;--red:#ef4444;--cyan:#06b6d4;--purple:#a855f7;
+  --shadow:0 1px 3px rgba(0,0,0,.3),0 1px 2px rgba(0,0,0,.2);
+  --shadow-lg:0 10px 40px rgba(0,0,0,.4);
+  --blur:blur(20px);--scrollbar:#1e293b;--scrollbar-hover:#334155;
 }
-body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;gap:16px}
-.header h1{font-size:20px;font-weight:700;background:linear-gradient(135deg,var(--accent2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header .badge{font-size:11px;background:var(--surface2);color:var(--text2);padding:2px 10px;border-radius:10px}
-.container{max-width:1400px;margin:0 auto;padding:24px 32px}
-.section{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden}
-.section-title{padding:16px 20px;font-size:14px;font-weight:600;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.section-title .count{font-size:12px;font-weight:400;color:var(--text2);margin-left:auto}
-.section-body{padding:20px}
-.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.stat-card{background:var(--surface2);border-radius:8px;padding:14px 16px}
-.stat-card .label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
-.stat-card .value{font-size:22px;font-weight:700;margin-top:4px}
-.upload-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.upload-zone{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);position:relative}
-.upload-zone:hover{border-color:var(--accent);background:rgba(59,130,246,.08)}
-.upload-zone.done{border-color:var(--green);background:rgba(34,197,94,.06)}
-.upload-zone .icon{font-size:28px;margin-bottom:6px}
-.upload-zone .name{font-size:12px;color:var(--text2);margin-top:4px;word-break:break-all}
-.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{padding:10px 12px;text-align:left;font-weight:600;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
-th:hover{color:var(--accent2)}
-td{padding:8px 12px;border-bottom:1px solid var(--border);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-tr:hover td{background:rgba(59,130,246,.04)}
-.table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto}
-.status-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
-.status-Critical{background:rgba(239,68,68,.15);color:var(--red)}
-.status-Urgent{background:rgba(249,115,22,.15);color:var(--orange)}
-.status-Important{background:rgba(234,179,8,.15);color:var(--yellow)}
-.status-Normal{background:rgba(34,197,94,.15);color:var(--green)}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:var(--accent2)}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+[data-theme="light"]{
+  --bg-deep:#f0f4ff;--bg-base:#f8fafc;--bg-elevated:#ffffff;--bg-card:#ffffff;
+  --bg-surface:rgba(255,255,255,.7);--border:rgba(148,163,184,.3);--border-light:rgba(148,163,184,.15);
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --primary:#2563eb;--primary-glow:rgba(37,99,235,.08);--primary-light:#3b82f6;
+  --accent:#ea580c;--accent-glow:rgba(234,88,12,.08);
+  --green:#16a34a;--yellow:#ca8a04;--orange:#ea580c;--red:#dc2626;--cyan:#0891b2;--purple:#9333ea;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg:0 10px 40px rgba(0,0,0,.08);
+  --blur:blur(20px);--scrollbar:#e2e8f0;--scrollbar-hover:#cbd5e1;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{color-scheme:dark}
+[data-theme="light"]{color-scheme:light}
+body{font-family:Inter,sans-serif;background:var(--bg-base);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--scrollbar-hover)}
+
+/* ============ LAYOUT ============ */
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;background:var(--bg-elevated);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;inset:0;z-index:100;transition:background .3s}
+.sidebar-brand{padding:20px 20px 12px;display:flex;align-items:center;gap:10px}
+.sidebar-brand svg{flex-shrink:0}
+.sidebar-brand h1{font-size:17px;font-weight:700;background:linear-gradient(135deg,var(--primary-light),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2}
+.sidebar-brand .sub{font-size:10px;color:var(--text3);-webkit-text-fill-color:var(--text3);margin-top:-2px}
+.sidebar-nav{flex:1;padding:12px 10px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:all .2s;margin-bottom:2px}
+.nav-item:hover{background:var(--bg-card);color:var(--text)}
+.nav-item.active{background:var(--primary-glow);color:var(--primary-light)}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.nav-item .badge{margin-left:auto;background:var(--bg-card);padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600;color:var(--text3)}
+.nav-item.active .badge{background:var(--primary);color:#fff}
+.nav-section{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:16px 14px 6px}
+.sidebar-footer{border-top:1px solid var(--border);padding:12px 10px}
+.main{margin-left:240px;flex:1;width:calc(100% - 240px);transition:background .3s}
+
+/* ============ HEADER ============ */
+.header-bar{display:flex;align-items:center;gap:12px;padding:14px 28px;background:var(--bg-surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.header-bar h2{font-size:16px;font-weight:600}
+.header-bar .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.header-bar .status-dot.ready{background:var(--green);box-shadow:0 0 6px var(--green)}
+.header-bar .status-dot.empty{background:var(--text3)}
+.theme-toggle{display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:3px;cursor:pointer;transition:all .2s;margin-left:auto}
+.theme-toggle .opt{padding:4px 10px;border-radius:14px;font-size:11px;font-weight:500;color:var(--text3);transition:all .2s}
+.theme-toggle .opt.active{background:var(--primary);color:#fff}
+.content{padding:24px 28px}
+
+/* ============ PAGES ============ */
+.page{display:none}.page.active{display:block}
+
+/* ============ CARDS ============ */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all .2s}
+.card:hover{box-shadow:var(--shadow-lg)}
+.card-header{padding:16px 20px;font-size:13px;font-weight:600;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-header .badge-count{font-size:11px;color:var(--text3);font-weight:400;margin-left:auto}
+.card-body{padding:20px}
+
+/* ============ STATS GRID ============ */
+.bento{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;transition:all .2s;position:relative;overflow:hidden}
+.stat-card:hover{border-color:var(--primary);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.stat-card .glow{position:absolute;top:-50%;right:-50%;width:100%;height:100%;background:radial-gradient(circle,var(--primary-glow),transparent 70%);opacity:0;transition:opacity .3s;pointer-events:none}
+.stat-card:hover .glow{opacity:1}
+.stat-card .label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:500}
+.stat-card .value{font-size:26px;font-weight:700;margin-top:4px;letter-spacing:-.5px}
+.stat-card .sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ============ TABLES ============ */
+.table-wrap{overflow-x:auto;max-height:500px;overflow-y:auto;border-radius:0 0 12px 12px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{padding:10px 14px;text-align:left;font-weight:600;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.3px;background:var(--bg-base)}
+td{padding:8px 14px;border-bottom:1px solid var(--border-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover td{background:var(--primary-glow)}
+tr:last-child td{border-bottom:none}
+.status-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:.2px}
+.status-Critical{background:rgba(239,68,68,.12);color:var(--red)}
+.status-Urgent{background:rgba(249,115,22,.12);color:var(--orange)}
+.status-Important{background:rgba(234,179,8,.12);color:var(--yellow)}
+.status-Normal{background:rgba(34,197,94,.12);color:var(--green)}
+
+/* ============ BUTTONS ============ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-light);box-shadow:0 0 20px var(--primary-glow)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{box-shadow:0 0 20px var(--accent-glow)}
 .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent2)}
-.btn-sm{padding:4px 10px;font-size:11px}
-.flex{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.ml-auto{margin-left:auto}
-.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px}
-.tab{padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary-light)}
+.btn-ghost{background:transparent;color:var(--text3);padding:6px 10px}
+.btn-ghost:hover{color:var(--red);background:rgba(239,68,68,.08)}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn-icon{padding:6px;border-radius:6px}
+
+/* ============ FILE UPLOAD ============ */
+.file-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px}
+.file-card{border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg-base);transition:all .2s;position:relative}
+.file-card.loaded{border-color:var(--green);background:rgba(34,197,94,.03)}
+.file-card .icon-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.file-card .icon-row svg{flex-shrink:0}
+.file-card .name{font-size:13px;font-weight:600}
+.file-card .hint{font-size:11px;color:var(--text3);margin-top:2px}
+.file-card .status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:6px}
+.file-card .status.ready{background:rgba(34,197,94,.1);color:var(--green)}
+.file-card .status.missing{background:rgba(100,116,139,.1);color:var(--text3)}
+.file-card input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.file-card .file-name{margin-top:4px;font-size:11px;color:var(--text2);word-break:break-all}
+.file-card .replace-hint{position:absolute;top:8px;right:8px;font-size:9px;padding:2px 6px;border-radius:4px;background:var(--primary-glow);color:var(--primary-light);display:none}
+.file-card.loaded .replace-hint{display:block}
+.actions-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 0 0;border-top:1px solid var(--border-light)}
+
+/* ============ SETTINGS ============ */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.setting-group{background:var(--bg-base);border:1px solid var(--border);border-radius:10px;padding:16px}
+.setting-group .label{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:10px;text-transform:uppercase;letter-spacing:.3px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:2px 0}
+.setting-row .l{font-size:12.5px;color:var(--text2)}
+.setting-row input{width:68px;background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:12px;text-align:center;font-family:JetBrains Mono,monospace}
+.setting-row input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-glow)}
+
+/* ============ TABS ============ */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border)}
+.tab{padding:10px 20px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s}
 .tab:hover{color:var(--text)}
-.tab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
+.tab.active{color:var(--primary-light);border-bottom-color:var(--primary-light)}
 .tab-content{display:none}
 .tab-content.active{display:block}
-#progress{display:none;padding:20px;text-align:center;color:var(--text2)}
-#progress .bar{width:100%;height:4px;background:var(--surface2);border-radius:2px;margin-top:12px;overflow:hidden}
-#progress .bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:2px;transition:width .3s}
+
+/* ============ FILTERS ============ */
 .filter-bar{display:flex;gap:8px;padding:12px 20px;flex-wrap:wrap;align-items:center}
-.filter-bar input,.filter-bar select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12px}
+.filter-bar input,.filter-bar select{background:var(--bg-base);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12px;font-family:inherit}
 .filter-bar input::placeholder{color:var(--text3)}
+.filter-bar select option{background:var(--bg-elevated)}
 .lazy-warn{font-size:11px;color:var(--text3);padding:4px 12px;font-style:italic}
-/* Settings */
-.settings-toggle{display:flex;align-items:center;gap:8px;padding:12px 20px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);border-top:1px solid var(--border);transition:color .2s}
-.settings-toggle:hover{color:var(--accent2)}
-.settings-toggle .arrow{transition:transform .2s;font-size:10px}
-.settings-toggle.open .arrow{transform:rotate(90deg)}
-.settings-panel{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
-.settings-panel.open{display:block}
-.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding-top:16px}
-.setting-group{background:var(--surface2);border-radius:8px;padding:12px 14px}
-.setting-group .label{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px}
-.setting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.setting-row .l{font-size:12px;color:var(--text2)}
-.setting-row input{width:60px;background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:12px;text-align:center}
-.setting-row input:focus{outline:1px solid var(--accent)}.
-@media(max-width:768px){.container{padding:12px 16px}.upload-grid{grid-template-columns:1fr}.header{padding:12px 16px}.settings-grid{grid-template-columns:1fr}}
+
+/* ============ QUALITY ============ */
+.issue-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:700}
+.issue-icon.error{background:rgba(239,68,68,.12);color:var(--red)}
+.issue-icon.warning{background:rgba(249,115,22,.12);color:var(--orange)}
+.issue-icon.info{background:rgba(59,130,246,.12);color:var(--primary-light)}
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:900px){.sidebar{width:200px}.main{margin-left:200px;width:calc(100% - 200px)}}
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative;border-right:none;border-bottom:1px solid var(--border)}
+  .sidebar-nav{display:flex;flex-wrap:wrap;gap:2px;padding:8px 12px}
+  .nav-section{display:none}
+  .nav-item{flex:1;justify-content:center;padding:8px 6px;font-size:11px;border-radius:6px}
+  .nav-item svg{width:16px;height:16px}
+  .nav-item .badge{display:none}
+  .sidebar-footer{display:none}
+  .main{margin-left:0;width:100%}
+  .content{padding:16px}
+  .header-bar{padding:12px 16px}
+  .bento{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){.bento{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <svg width="32" height="32" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="url(#g)" stroke-width="6"/><path d="M30 60 L50 30 L70 60" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 52 L50 38 L65 52" fill="none" stroke="url(#g)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 46 L50 40 L58 46" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="28" r="3" fill="url(#g)"/><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs></svg>
-  <h1>Import Control Tower</h1>
-  <span class="badge">Bangladesh</span>
-  <span class="badge" id="poCount">0 POs</span>
+<div class="app" id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <svg width="34" height="34" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="url(#g)" stroke-width="6"/><path d="M30 60 L50 30 L70 60" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 52 L50 38 L65 52" fill="none" stroke="url(#g)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 46 L50 40 L58 46" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="28" r="3.5" fill="url(#g)"/><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs></svg>
+      <div><h1>Import Control<br>Tower</h1><div class="sub">Bangladesh</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        Dashboard
+        <span class="badge" id="navPoCount">0</span>
+      </div>
+      <div class="nav-item" onclick="navigate('files')" id="nav-files">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Files
+      </div>
+      <div class="nav-section">Configuration</div>
+      <div class="nav-item" onclick="navigate('settings')" id="nav-settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="nav-item" onclick="hardRefresh()" style="color:var(--text3)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Hard Refresh
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="header-bar">
+      <div class="status-dot empty" id="statusDot"></div>
+      <h2 id="pageTitle">Dashboard</h2>
+      <div class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <span class="opt active" id="themeDark">Dark</span>
+        <span class="opt" id="themeLight">Light</span>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- ===== DASHBOARD PAGE ===== -->
+      <div class="page active" id="page-dashboard">
+        <div id="dashboardEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          <h3 style="margin-top:16px;color:var(--text2);font-weight:500">No data loaded</h3>
+          <p style="margin-top:6px;color:var(--text3);font-size:13px;max-width:400px">Upload your Excel files, then click <strong>Generate Master Data</strong> to process everything.</p>
+          <button class="btn btn-primary" style="margin-top:20px" onclick="navigate('files')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Go to Files
+          </button>
+        </div>
+        <div id="dashboardContent" style="display:none">
+          <div class="bento" id="statsGrid"></div>
+          <div class="card">
+            <div class="tabs">
+              <div class="tab active" onclick="switchTab('dt','dm',this)">Master Data</div>
+              <div class="tab" onclick="switchTab('dt','dr',this)">Risk View</div>
+              <div class="tab" onclick="switchTab('dt','dq',this)">Quality Log</div>
+            </div>
+            <div class="tab-content active" id="dt-dm">
+              <div class="filter-bar">
+                <input placeholder="Search PO, country, status…" id="searchInput" oninput="renderTable()">
+                <select id="urgencyFilter" onchange="renderTable()"><option value="">All Urgencies</option><option value="Critical">Critical</option><option value="Urgent">Urgent</option><option value="Important">Important</option><option value="Normal">Normal</option></select>
+                <select id="visibilityFilter" onchange="renderTable()"><option value="">All Visibility</option><option value="In Tracker and Eagle Eye">Tracker + Eagle</option><option value="Tracker visible / shipment visibility not yet available">Tracker Only</option><option value="Tracker not updated / shipment visible">Eagle Only</option><option value="No Tracker or shipment visibility">None</option></select>
+                <span class="lazy-warn" id="rowCount"></span>
+              </div>
+              <div class="table-wrap" id="tableWrap"></div>
+            </div>
+            <div class="tab-content" id="dt-dr">
+              <div class="filter-bar">
+                <select id="riskUrgencyFilter" onchange="renderRiskView()"><option value="">All Urgencies</option><option value="Critical">Critical</option><option value="Urgent">Urgent</option><option value="Important">Important</option><option value="Normal">Normal</option></select>
+                <select id="riskOwnerFilter" onchange="renderRiskView()"><option value="">All Owners</option></select>
+              </div>
+              <div class="table-wrap" id="riskTableWrap"></div>
+            </div>
+            <div class="tab-content" id="dt-dq">
+              <div class="table-wrap" id="qualityTableWrap"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FILES PAGE ===== -->
+      <div class="page" id="page-files">
+        <div class="card" style="border-color:var(--primary)">
+          <div class="card-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            Data Sources
+            <span class="badge-count" id="filesReadyCount">0/4 ready</span>
+          </div>
+          <div class="card-body">
+            <div class="file-grid">
+              <div class="file-card" id="fc-sap">
+                <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'sap')">
+                <div class="icon-row">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                  <div><div class="name">SAP Open PO</div><div class="hint">Sheet: Open PO / Data • Cols A/B/I/N</div></div>
+                </div>
+                <div class="file-name" id="fn-sap"></div>
+                <span class="status missing" id="fs-sap">Not loaded</span>
+                <span class="replace-hint">Click to replace</span>
+              </div>
+              <div class="file-card" id="fc-tracker">
+                <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'tracker')">
+                <div class="icon-row">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  <div><div class="name">BD Tracker</div><div class="hint">Sheet: Tracker file</div></div>
+                </div>
+                <div class="file-name" id="fn-tracker"></div>
+                <span class="status missing" id="fs-tracker">Not loaded</span>
+                <span class="replace-hint">Click to replace</span>
+              </div>
+              <div class="file-card" id="fc-eagle">
+                <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'eagle')">
+                <div class="icon-row">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <div><div class="name">Eagle Eye</div><div class="hint">Sheet: Sheet1</div></div>
+                </div>
+                <div class="file-name" id="fn-eagle"></div>
+                <span class="status missing" id="fs-eagle">Not loaded</span>
+                <span class="replace-hint">Click to replace</span>
+              </div>
+              <div class="file-card" id="fc-pm">
+                <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'pm')">
+                <div class="icon-row">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                  <div><div class="name">Product Master</div><div class="hint">Sheet: Master • Cols C/F</div></div>
+                </div>
+                <div class="file-name" id="fn-pm"></div>
+                <span class="status missing" id="fs-pm">Not loaded</span>
+                <span class="replace-hint">Click to replace</span>
+              </div>
+            </div>
+            <div class="actions-bar">
+              <button class="btn btn-primary" id="btnGenerate" disabled onclick="runPipeline()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Generate Master Data
+              </button>
+              <button class="btn btn-outline" onclick="downloadMasterData()" id="btnDownload" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Master Data
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="clearAllFiles()" style="margin-left:auto">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Clear All Files
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="fileProgress" style="display:none;margin-top:16px">
+          <div class="card"><div class="card-body" style="text-align:center;padding:32px">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+            <div style="margin-top:12px;font-weight:600">Processing pipeline…</div>
+            <div style="margin-top:4px;font-size:13px;color:var(--text3)" id="fileProgressMsg">Reading SAP, Tracker, Eagle Eye, Product Master</div>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS PAGE ===== -->
+      <div class="page" id="page-settings">
+        <div class="card">
+          <div class="card-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Threshold Configuration
+            <span class="badge-count">Customize urgency rules</span>
+          </div>
+          <div class="card-body">
+            <div class="settings-grid">
+              <div class="setting-group">
+                <div class="label">LC Overdue</div>
+                <div class="setting-row"><span class="l">Critical (red) ≥</span><input type="number" id="s-lc-crit" min="1" value="7" onchange="saveSettings();autoReGenerate()"></div>
+                <div class="setting-row"><span class="l">Urgent (orange) ≥</span><input type="number" id="s-lc-urg" min="1" value="3" onchange="saveSettings();autoReGenerate()"></div>
+              </div>
+              <div class="setting-group">
+                <div class="label">SI Overdue</div>
+                <div class="setting-row"><span class="l">Critical (red) ≥</span><input type="number" id="s-si-crit" min="1" value="7" onchange="saveSettings();autoReGenerate()"></div>
+                <div class="setting-row"><span class="l">Urgent (orange) ≥</span><input type="number" id="s-si-urg" min="1" value="3" onchange="saveSettings();autoReGenerate()"></div>
+              </div>
+              <div class="setting-group">
+                <div class="label">ETA Overdue</div>
+                <div class="setting-row"><span class="l">Critical (red) ≥</span><input type="number" id="s-eta-crit" min="1" value="14" onchange="saveSettings();autoReGenerate()"></div>
+                <div class="setting-row"><span class="l">Urgent (orange) ≥</span><input type="number" id="s-eta-urg" min="1" value="7" onchange="saveSettings();autoReGenerate()"></div>
+              </div>
+              <div class="setting-group">
+                <div class="label">ETA Probability</div>
+                <div class="setting-row"><span class="l">Critical (red) ≤</span><input type="number" id="s-prob-crit" min="0" max="1" step="0.05" value="0.3" onchange="saveSettings();autoReGenerate()"></div>
+                <div class="setting-row"><span class="l">Urgent (orange) ≤</span><input type="number" id="s-prob-urg" min="0" max="1" step="0.05" value="0.5" onchange="saveSettings();autoReGenerate()"></div>
+                <div class="setting-row"><span class="l">Important (yellow) ≤</span><input type="number" id="s-prob-imp" min="0" max="1" step="0.05" value="0.7" onchange="saveSettings();autoReGenerate()"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 
-<div class="container">
-
-<!-- Upload Section -->
-<div class="section">
-  <div class="section-title">Data Sources</div>
-  <div class="section-body">
-    <div class="upload-grid">
-      <div class="upload-zone" id="zone-sap">
-        <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'sap')">
-        <div class="icon">📦</div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px">SAP Open PO</div>
-        <div style="font-size:11px;color:var(--text3)">Sheet: Open PO / Data</div>
-        <div class="name"></div>
-      </div>
-      <div class="upload-zone" id="zone-tracker">
-        <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'tracker')">
-        <div class="icon">📋</div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px">BD Tracker</div>
-        <div style="font-size:11px;color:var(--text3)">Sheet: Tracker file</div>
-        <div class="name"></div>
-      </div>
-      <div class="upload-zone" id="zone-eagle">
-        <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'eagle')">
-        <div class="icon">🛰️</div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Eagle Eye</div>
-        <div style="font-size:11px;color:var(--text3)">Sheet: Sheet1</div>
-        <div class="name"></div>
-      </div>
-      <div class="upload-zone" id="zone-pm">
-        <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'pm')">
-        <div class="icon">📘</div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Product Master</div>
-        <div style="font-size:11px;color:var(--text3)">Sheet: Master</div>
-        <div class="name"></div>
-      </div>
-    </div>
-    <div id="progress">
-      <div>Processing pipeline…</div>
-      <div class="bar"><div class="bar-fill" id="barFill"></div></div>
-    </div>
-  </div>
-
-  <!-- Settings Toggle -->
-  <div class="settings-toggle" onclick="toggleSettings()">
-    <span class="arrow">▶</span> Threshold Settings — configure what makes a PO Critical / Urgent
-  </div>
-  <div class="settings-panel" id="settingsPanel">
-    <div class="settings-grid">
-      <div class="setting-group">
-        <div class="label">LC Overdue</div>
-        <div class="setting-row"><span class="l">Critical ≥</span><input type="number" id="s-lc-crit" min="1" value="7" onchange="saveSettings();rerunPipeline()"></div>
-        <div class="setting-row"><span class="l">Urgent ≥</span><input type="number" id="s-lc-urg" min="1" value="3" onchange="saveSettings();rerunPipeline()"></div>
-      </div>
-      <div class="setting-group">
-        <div class="label">SI Overdue</div>
-        <div class="setting-row"><span class="l">Critical ≥</span><input type="number" id="s-si-crit" min="1" value="7" onchange="saveSettings();rerunPipeline()"></div>
-        <div class="setting-row"><span class="l">Urgent ≥</span><input type="number" id="s-si-urg" min="1" value="3" onchange="saveSettings();rerunPipeline()"></div>
-      </div>
-      <div class="setting-group">
-        <div class="label">ETA Overdue</div>
-        <div class="setting-row"><span class="l">Critical ≥</span><input type="number" id="s-eta-crit" min="1" value="14" onchange="saveSettings();rerunPipeline()"></div>
-        <div class="setting-row"><span class="l">Urgent ≥</span><input type="number" id="s-eta-urg" min="1" value="7" onchange="saveSettings();rerunPipeline()"></div>
-      </div>
-      <div class="setting-group">
-        <div class="label">ETA Probability</div>
-        <div class="setting-row"><span class="l">Critical ≤</span><input type="number" id="s-prob-crit" min="0" max="1" step="0.05" value="0.3" onchange="saveSettings();rerunPipeline()"></div>
-        <div class="setting-row"><span class="l">Urgent ≤</span><input type="number" id="s-prob-urg" min="0" max="1" step="0.05" value="0.5" onchange="saveSettings();rerunPipeline()"></div>
-        <div class="setting-row"><span class="l">Important ≤</span><input type="number" id="s-prob-imp" min="0" max="1" step="0.05" value="0.7" onchange="saveSettings();rerunPipeline()"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Dashboard -->
-<div class="section" id="dashboardSection" style="display:none">
-  <div class="section-title">
-    Dashboard
-    <div class="flex ml-auto">
-      <button class="btn btn-primary" onclick="downloadMasterData()">⬇ Download Master Data (.xlsx)</button>
-    </div>
-  </div>
-  <div class="section-body">
-    <div class="grid-4" id="statsGrid"></div>
-  </div>
-  <div class="tabs">
-    <div class="tab active" data-tab="tab-table" onclick="switchTab('tab-table',this)">Master Data</div>
-    <div class="tab" data-tab="tab-risk" onclick="switchTab('tab-risk',this)">Risk View</div>
-    <div class="tab" data-tab="tab-quality" onclick="switchTab('tab-quality',this)">Quality Log</div>
-  </div>
-  <div class="tab-content active" id="tab-table">
-    <div class="filter-bar">
-      <input placeholder="Search PO, country, status…" id="searchInput" oninput="renderTable()">
-      <select id="urgencyFilter" onchange="renderTable()">
-        <option value="">All Urgencies</option>
-        <option value="Critical">Critical</option>
-        <option value="Urgent">Urgent</option>
-        <option value="Important">Important</option>
-        <option value="Normal">Normal</option>
-      </select>
-      <select id="visibilityFilter" onchange="renderTable()">
-        <option value="">All Visibility</option>
-        <option value="In Tracker and Eagle Eye">In Tracker and Eagle Eye</option>
-        <option value="Tracker visible / shipment visibility not yet available">Tracker visible, no shipment</option>
-        <option value="Tracker not updated / shipment visible">Shipment visible, no tracker</option>
-        <option value="No Tracker or shipment visibility">No tracker or shipment</option>
-      </select>
-      <span class="lazy-warn" id="rowCount"></span>
-    </div>
-    <div class="table-wrap" id="tableWrap"><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div>
-  </div>
-  <div class="tab-content" id="tab-risk">
-    <div class="filter-bar">
-      <select id="riskUrgencyFilter" onchange="renderRiskView()">
-        <option value="">All Urgencies</option>
-        <option value="Critical">Critical</option>
-        <option value="Urgent">Urgent</option>
-        <option value="Important">Important</option>
-        <option value="Normal">Normal</option>
-      </select>
-      <select id="riskOwnerFilter" onchange="renderRiskView()">
-        <option value="">All Owners</option>
-      </select>
-    </div>
-    <div class="table-wrap" id="riskTableWrap"></div>
-  </div>
-  <div class="tab-content" id="tab-quality">
-    <div class="table-wrap" id="qualityTableWrap"></div>
-  </div>
-</div>
-</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 <script>
-// ===================== DATA STORE =====================
+/* ===================== DATA ===================== */
 const _data = {sap:[], tracker:[], eagle:[], pm:[], merged:[], quality:[]}
+let _filesReady = 0
+let _generatedOnce = false
 
-// ===================== FILE HANDLING =====================
-function handleFile(ev,key){
+/* ===================== INDEXEDDB PERSISTENCE ===================== */
+const DB_NAME='ict_files', DB_VER=1, STORE='files'
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER)
+    req.onupgradeneeded=e=>{e.target.result.createObjectStore(STORE)}
+    req.onsuccess=e=>res(e.target.result)
+    req.onerror=e=>rej(e.target.error)
+  })
+}
+async function saveFileToDB(key,data){
+  const db=await openDB()
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readwrite')
+    tx.objectStore(STORE).put(data,key)
+    tx.oncomplete=()=>res()
+    tx.onerror=e=>rej(e.target.error)
+  })
+}
+async function loadFileFromDB(key){
+  const db=await openDB()
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readonly')
+    const req=tx.objectStore(STORE).get(key)
+    req.onsuccess=e=>res(e.target.result)
+    req.onerror=e=>rej(e.target.error)
+  })
+}
+async function deleteFileFromDB(key){
+  const db=await openDB()
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readwrite')
+    tx.objectStore(STORE).delete(key)
+    tx.oncomplete=()=>res()
+    tx.onerror=e=>rej(e.target.error)
+  })
+}
+async function clearAllDB(){
+  const db=await openDB()
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readwrite')
+    tx.objectStore(STORE).clear()
+    tx.oncomplete=()=>res()
+    tx.onerror=e=>rej(e.target.error)
+  })
+}
+const _fileMeta = {sap:null, tracker:null, eagle:null, pm:null}
+
+/* ===================== PERSISTENCE ON LOAD ===================== */
+async function loadPersistedFiles(){
+  for(const key of ['sap','tracker','eagle','pm']){
+    const buf=await loadFileFromDB(key)
+    if(buf){
+      const wb=XLSX.read(buf,{type:'array'})
+      switch(key){
+        case 'sap': loadSAP(wb); _fileMeta.sap={name:'Persisted file',size:buf.byteLength}; break
+        case 'tracker': loadTracker(wb); _fileMeta.tracker={name:'Persisted file',size:buf.byteLength}; break
+        case 'eagle': loadEagle(wb); _fileMeta.eagle={name:'Persisted file',size:buf.byteLength}; break
+        case 'pm': loadPM(wb); _fileMeta.pm={name:'Persisted file',size:buf.byteLength}; break
+      }
+      setFileUI(key)
+    }
+  }
+}
+
+/* ===================== FILE HANDLING ===================== */
+async function handleFile(ev,key){
   const f=ev.target.files[0]; if(!f)return
-  document.querySelector(`#zone-${key} .name`).textContent=f.name
-  document.getElementById(`zone-${key}`).classList.add('done')
   const reader=new FileReader()
-  reader.onload=function(e){
-    const wb=XLSX.read(e.target.result,{type:'array'})
+  reader.onload=async function(e){
+    const buf=e.target.result
+    await saveFileToDB(key,buf)
+    _fileMeta[key]={name:f.name,size:f.size}
+    const wb=XLSX.read(buf,{type:'array'})
     switch(key){
       case 'sap': loadSAP(wb); break
       case 'tracker': loadTracker(wb); break
       case 'eagle': loadEagle(wb); break
       case 'pm': loadPM(wb); break
     }
-    if(_data.sap.length&&_data.tracker.length&&_data.eagle.length&&_data.pm.length) runPipeline()
+    setFileUI(key)
   }
   reader.readAsArrayBuffer(f)
 }
 
-// ===================== NORMALIZE PO (M-code: Text.Select + Text.Start 10) =====================
-function normalizePO(raw){
-  return String(raw).replace(/\D/g,'').slice(0,10)
+function setFileUI(key){
+  const fn=document.getElementById(`fn-${key}`)
+  const fs=document.getElementById(`fs-${key}`)
+  const fc=document.getElementById(`fc-${key}`)
+  const meta=_fileMeta[key]
+  if(meta){
+    fn.textContent=meta.name
+    fs.textContent='Loaded'
+    fs.className='status ready'
+    fc.classList.add('loaded')
+  }else{
+    fn.textContent=''
+    fs.textContent='Not loaded'
+    fs.className='status missing'
+    fc.classList.remove('loaded')
+  }
+  _filesReady=['sap','tracker','eagle','pm'].filter(k=>_fileMeta[k]).length
+  document.getElementById('filesReadyCount').textContent=`${_filesReady}/4 ready`
+  document.getElementById('btnGenerate').disabled=_filesReady<4
+  if(_filesReady===4){
+    document.getElementById('statusDot').className='status-dot ready'
+  }else{
+    document.getElementById('statusDot').className='status-dot empty'
+  }
 }
 
-// ===================== LOADERS =====================
+async function clearAllFiles(){
+  if(!confirm('Clear all uploaded files and reset?'))return
+  await clearAllDB()
+  for(const key of ['sap','tracker','eagle','pm']){
+    _fileMeta[key]=null; _data[key]=[]
+  }
+  _data.merged=[]; _data.quality=[]
+  _generatedOnce=false
+  setFileUI('sap');setFileUI('tracker');setFileUI('eagle');setFileUI('pm')
+  document.getElementById('btnGenerate').disabled=true
+  document.getElementById('btnDownload').disabled=true
+  document.getElementById('dashboardContent').style.display='none'
+  document.getElementById('dashboardEmpty').style.display='flex'
+  document.getElementById('poCount').textContent='0'
+  document.getElementById('navPoCount').textContent='0'
+  navigate('files')
+}
+
+/* ===================== LOADERS ===================== */
+function normalizePO(raw){return String(raw).replace(/\D/g,'').slice(0,10)}
+function parseDate(val){
+  if(!val||val==='-')return null
+  if(typeof val==='number'){const d=new Date((val-25569)*86400000);return isNaN(d.getTime())?null:d.toISOString().slice(0,10)}
+  const d=new Date(val);if(!isNaN(d.getTime()))return d.toISOString().slice(0,10)
+  const parts=String(val).split(/[-\/]/)
+  if(parts.length===3){let y=parseInt(parts[2]),m=parseInt(parts[1])-1,d=parseInt(parts[0]);if(y<100)y+=2000;const dt=new Date(y,m,d);if(!isNaN(dt.getTime()))return dt.toISOString().slice(0,10)}
+  return null
+}
+
 function loadSAP(wb){
   const sn=wb.SheetNames.includes('Open PO')?'Open PO':wb.SheetNames[0]
   const ws=wb.Sheets[sn]
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1})
-  const out=[]
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1}); const out=[]
   for(let i=1;i<rows.length;i++){
-    const r=rows[i]; if(!r||r.length<14)continue
-    const mat=String(r[0]||'').trim()
-    const desc=String(r[1]||'').trim()
-    const po=String(r[2]||'').trim()
-    const qty=parseFloat(r[3])||0
-    if(!mat||!po)continue
-    const poNorm=normalizePO(po)
-    if(!poNorm||poNorm.length!==10)continue
-    if(poNorm.startsWith('62'))continue
-    const agiKey=mat.replace(/^0+/,'')
-    out.push({
-      product_description:desc,
-      purchasing_document:po,
-      open_qty:qty,
-      normalized_po:poNorm,
-      agi_key:agiKey
-    })
+    const r=rows[i];if(!r||r.length<14)continue
+    const mat=String(r[0]||'').trim(),desc=String(r[1]||'').trim(),po=String(r[2]||'').trim(),qty=parseFloat(r[3])||0
+    if(!mat||!po)continue;const poNorm=normalizePO(po)
+    if(!poNorm||poNorm.length!==10)continue;if(poNorm.startsWith('62'))continue
+    out.push({product_description:desc,purchasing_document:po,open_qty:qty,normalized_po:poNorm,agi_key:mat.replace(/^0+/,'')})
   }
   _data.sap=out
 }
-
 function loadTracker(wb){
-  const ws=wb.Sheets['Tracker file']; if(!ws){_data.tracker=[];return}
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1})
-  const out=[]
+  const ws=wb.Sheets['Tracker file'];if(!ws){_data.tracker=[];return}
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1});const out=[]
   for(let i=1;i<rows.length;i++){
-    const r=rows[i]; if(!r||r.length<20)continue
-    const os=String(r[0]||'').trim()
-    if(!os)continue
-    const rawPo=String(r[2]||'').trim()
-    const poNorm=normalizePO(rawPo)
+    const r=rows[i];if(!r||r.length<20)continue;const os=String(r[0]||'').trim();if(!os)continue
+    const rawPo=String(r[2]||'').trim();const poNorm=normalizePO(rawPo)
     if(!poNorm||poNorm.length!==10)continue
-    let partialNo=null
-    const dashM=rawPo.match(/-\s*(\d+)$/)
-    if(dashM)partialNo=dashM[1]
+    let partialNo=null;const dashM=rawPo.match(/-\s*(\d+)$/);if(dashM)partialNo=dashM[1]
     const p=(i)=>parseDate(r[i])
-    out.push({
-      tracker_overall_status:os,
-      normalized_po:poNorm,
-      partial_shipment_no:partialNo,
-      lc_date:p(11),
-      si_shared_date:p(12),
-      tracker_rdd:p(13),
-      tracker_etd:p(14),
-      tracker_eta:p(15),
-      obl_ebl_received_date:p(17),
-      final_docs_received_date:p(18)
-    })
+    out.push({tracker_overall_status:os,normalized_po:poNorm,partial_shipment_no:partialNo,lc_date:p(11),si_shared_date:p(12),tracker_rdd:p(13),tracker_etd:p(14),tracker_eta:p(15),obl_ebl_received_date:p(17),final_docs_received_date:p(18)})
   }
   _data.tracker=out
 }
-
 function loadEagle(wb){
-  const ws=wb.Sheets['Sheet1']; if(!ws){_data.eagle=[];return}
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1})
-  const out=[]
+  const ws=wb.Sheets['Sheet1'];if(!ws){_data.eagle=[];return}
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1});const out=[]
   for(let i=1;i<rows.length;i++){
-    const r=rows[i]; if(!r||r.length<22)continue
-    const rawPo=String(r[2]||'').trim()
-    const poNorm=normalizePO(rawPo)
+    const r=rows[i];if(!r||r.length<22)continue;const rawPo=String(r[2]||'').trim();const poNorm=normalizePO(rawPo)
     if(!poNorm||poNorm.length!==10)continue
-    let eta=parseDate(r[19])
-    out.push({
-      normalized_po:poNorm,
-      container_no:String(r[6]||'').trim(),
-      tracking_link:String(r[7]||'').trim(),
-      shipment_status:String(r[8]||'').trim(),
-      eagle_eta:eta
-    })
+    out.push({normalized_po:poNorm,container_no:String(r[6]||'').trim(),tracking_link:String(r[7]||'').trim(),shipment_status:String(r[8]||'').trim(),eagle_eta:parseDate(r[19])})
   }
   _data.eagle=out
 }
-
 function loadPM(wb){
-  const ws=wb.Sheets['Master']; if(!ws){_data.pm=[];return}
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1})
-  const seen=new Set()
-  const out=[]
+  const ws=wb.Sheets['Master'];if(!ws){_data.pm=[];return}
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1});const seen=new Set();const out=[]
   for(let i=1;i<rows.length;i++){
-    const r=rows[i]; if(!r)continue
-    const agiStr=String(r[2]||'').trim()
-    if(!agiStr)continue
-    const agi=parseInt(agiStr); if(isNaN(agi))continue
-    const agiKey=String(agi).replace(/^0+/,'')
-    if(seen.has(agiKey))continue
-    seen.add(agiKey)
-    out.push({
-      agi:agi,
-      agi_key:agiKey,
-      source_country_raw:String(r[5]||'').trim()
-    })
+    const r=rows[i];if(!r)continue;const agiStr=String(r[2]||'').trim()
+    if(!agiStr)continue;const agi=parseInt(agiStr);if(isNaN(agi))continue
+    const agiKey=String(agi).replace(/^0+/,'');if(seen.has(agiKey))continue;seen.add(agiKey)
+    out.push({agi:agi,agi_key:agiKey,source_country_raw:String(r[5]||'').trim()})
   }
   _data.pm=out
 }
 
-// ===================== HELPERS =====================
-function parseDate(val){
-  if(!val||val==='-')return null
-  if(typeof val==='number'){
-    const d=new Date((val-25569)*86400000)
-    return isNaN(d.getTime())?null:d.toISOString().slice(0,10)
-  }
-  const d=new Date(val); if(!isNaN(d.getTime()))return d.toISOString().slice(0,10)
-  const parts=String(val).split(/[-\/]/)
-  if(parts.length===3){
-    let y=parseInt(parts[2]),m=parseInt(parts[1])-1,d=parseInt(parts[0])
-    if(y<100)y+=2000
-    const dt=new Date(y,m,d)
-    if(!isNaN(dt.getTime()))return dt.toISOString().slice(0,10)
-  }
-  return null
-}
-
-function daysAgo(d){if(!d)return null;return Math.round((Date.now()-new Date(d))/(86400000))}
-
-function esc(s){return s!=null?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
-
+/* ===================== SETTINGS ===================== */
 function loadSettings(){
-  try{
-    const s=JSON.parse(localStorage.getItem('ict_settings'))
-    if(s&&s.v===1)return s
-  }catch(e){}
+  try{const s=JSON.parse(localStorage.getItem('ict_settings'));if(s&&s.v===1)return s}catch(e){}
   return{v:1,lc_crit:7,lc_urg:3,si_crit:7,si_urg:3,eta_crit:14,eta_urg:7,prob_crit:0.3,prob_urg:0.5,prob_imp:0.7}
 }
-
 function saveSettings(){
   const s=loadSettings()
-  s.lc_crit=parseFloat(document.getElementById('s-lc-crit').value)||7
-  s.lc_urg=parseFloat(document.getElementById('s-lc-urg').value)||3
-  s.si_crit=parseFloat(document.getElementById('s-si-crit').value)||7
-  s.si_urg=parseFloat(document.getElementById('s-si-urg').value)||3
-  s.eta_crit=parseFloat(document.getElementById('s-eta-crit').value)||14
-  s.eta_urg=parseFloat(document.getElementById('s-eta-urg').value)||7
-  s.prob_crit=parseFloat(document.getElementById('s-prob-crit').value)||0.3
-  s.prob_urg=parseFloat(document.getElementById('s-prob-urg').value)||0.5
-  s.prob_imp=parseFloat(document.getElementById('s-prob-imp').value)||0.7
+  s.lc_crit=parseFloat(document.getElementById('s-lc-crit').value)||7;s.lc_urg=parseFloat(document.getElementById('s-lc-urg').value)||3
+  s.si_crit=parseFloat(document.getElementById('s-si-crit').value)||7;s.si_urg=parseFloat(document.getElementById('s-si-urg').value)||3
+  s.eta_crit=parseFloat(document.getElementById('s-eta-crit').value)||14;s.eta_urg=parseFloat(document.getElementById('s-eta-urg').value)||7
+  s.prob_crit=parseFloat(document.getElementById('s-prob-crit').value)||.3;s.prob_urg=parseFloat(document.getElementById('s-prob-urg').value)||.5;s.prob_imp=parseFloat(document.getElementById('s-prob-imp').value)||.7
   localStorage.setItem('ict_settings',JSON.stringify(s))
 }
-
 function applySettingsToUI(){
   const s=loadSettings()
-  document.getElementById('s-lc-crit').value=s.lc_crit
-  document.getElementById('s-lc-urg').value=s.lc_urg
-  document.getElementById('s-si-crit').value=s.si_crit
-  document.getElementById('s-si-urg').value=s.si_urg
-  document.getElementById('s-eta-crit').value=s.eta_crit
-  document.getElementById('s-eta-urg').value=s.eta_urg
-  document.getElementById('s-prob-crit').value=s.prob_crit
-  document.getElementById('s-prob-urg').value=s.prob_urg
-  document.getElementById('s-prob-imp').value=s.prob_imp
+  document.getElementById('s-lc-crit').value=s.lc_crit;document.getElementById('s-lc-urg').value=s.lc_urg
+  document.getElementById('s-si-crit').value=s.si_crit;document.getElementById('s-si-urg').value=s.si_urg
+  document.getElementById('s-eta-crit').value=s.eta_crit;document.getElementById('s-eta-urg').value=s.eta_urg
+  document.getElementById('s-prob-crit').value=s.prob_crit;document.getElementById('s-prob-urg').value=s.prob_urg;document.getElementById('s-prob-imp').value=s.prob_imp
 }
 
-function toggleSettings(){
-  const sp=document.getElementById('settingsPanel')
-  const st=document.querySelector('.settings-toggle')
-  sp.classList.toggle('open')
-  st.classList.toggle('open')
+/* ===================== THEME ===================== */
+function toggleTheme(){
+  const html=document.documentElement
+  const isDark=html.getAttribute('data-theme')==='dark'
+  html.setAttribute('data-theme',isDark?'light':'dark')
+  document.getElementById('themeDark').classList.toggle('active',!isDark)
+  document.getElementById('themeLight').classList.toggle('active',isDark)
+  localStorage.setItem('ict_theme',isDark?'light':'dark')
 }
-applySettingsToUI()
+function loadTheme(){
+  const t=localStorage.getItem('ict_theme')
+  if(t==='light'){
+    document.documentElement.setAttribute('data-theme','light')
+    document.getElementById('themeDark').classList.remove('active')
+    document.getElementById('themeLight').classList.add('active')
+  }
+}
+loadTheme()
 
-function getSettingsHash(){
-  const s=loadSettings()
-  return `${s.lc_crit}|${s.lc_urg}|${s.si_crit}|${s.si_urg}|${s.eta_crit}|${s.eta_urg}|${s.prob_crit}|${s.prob_urg}|${s.prob_imp}`
+/* ===================== NAVIGATION ===================== */
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'))
+  document.getElementById(`page-${page}`).classList.add('active')
+  document.getElementById(`nav-${page}`).classList.add('active')
+  const titles={dashboard:'Dashboard',files:'Files',settings:'Settings'}
+  document.getElementById('pageTitle').textContent=titles[page]
+  if(page==='dashboard'&&_generatedOnce)renderDashboard()
+}
+function switchTab(prefix,id,el){
+  document.querySelectorAll(`#${prefix} .tab-content`).forEach(t=>t.classList.remove('active'))
+  document.querySelectorAll(`#${prefix} .tab`).forEach(t=>t.classList.remove('active'))
+  document.getElementById(id).classList.add('active');el.classList.add('active')
+  if(id==='dt-dr')renderRiskView()
+  if(id==='dt-dq')renderQualityLog()
 }
 
-// ===================== PROCESSING (M-code aligned) =====================
+/* ===================== PROCESSING ===================== */
+function daysAgo(d){if(!d)return null;return Math.round((Date.now()-new Date(d))/(86400000))}
+function esc(s){return s!=null?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
 
-// Step 1: Cross-reference AGI (SAP → Product Master)
 function crossRefAGI(){
-  const agiMap={}
-  _data.pm.forEach(p=>{agiMap[p.agi_key]=p.source_country_raw})
-  _data.sap.forEach(row=>{
-    row.source_country_raw=agiMap[row.agi_key]||null
-    row.agi_matched=!!row.source_country_raw
-    // Also simplify source_country for display
-    row.source_country=row.source_country_raw
-  })
+  const agiMap={};_data.pm.forEach(p=>{agiMap[p.agi_key]=p.source_country_raw})
+  _data.sap.forEach(r=>{r.source_country_raw=agiMap[r.agi_key]||null;r.source_country=r.source_country_raw;r.agi_matched=!!r.source_country_raw})
 }
 
-// Step 2: Build BD_Tracker_PO_Summary + expand detail rows (matching M-code structure)
-function buildTrackerSummaryAndExpand(){
-
-  // Group by PO → BD_Tracker_PO_Summary
-  const groups={}
-  _data.tracker.forEach(t=>{
-    const po=t.normalized_po
-    if(!groups[po])groups[po]=[]
-    groups[po].push(t)
-  })
-
-  // Build summary per PO + keep detail rows for expansion
-  const summaryMap={}
+function buildTrackerSummary(){
+  const groups={};_data.tracker.forEach(t=>{const po=t.normalized_po;if(!groups[po])groups[po]=[];groups[po].push(t)})
+  const map={};
   Object.keys(groups).forEach(po=>{
-    const rows=groups[po]
-    // Aggregate dates (matching M-code grouping)
-    const dates=rows.map(r=>({
-      lc:r.lc_date, si:r.si_shared_date, rdd:r.tracker_rdd,
-      etd:r.tracker_etd, eta:r.tracker_eta, obl:r.obl_ebl_received_date,
-      final:r.final_docs_received_date
-    }))
-    const first=(a)=>a.filter(Boolean).sort()[0]||null
-    const last=(a)=>a.filter(Boolean).sort().reverse()[0]||null
-    summaryMap[po]={
-      normalized_po:po,
-      partial_shipment_count:rows.length,
-      first_lc_date:first(dates.map(d=>d.lc)),
-      latest_si_shared_date:last(dates.map(d=>d.si)),
-      earliest_tracker_rdd:first(dates.map(d=>d.rdd)),
-      earliest_tracker_etd:first(dates.map(d=>d.etd)),
-      earliest_tracker_eta:first(dates.map(d=>d.eta)),
-      latest_obl_ebl_received_date:last(dates.map(d=>d.obl)),
-      latest_final_docs_received_date:last(dates.map(d=>d.final)),
-      tracker_detail_rows:rows // keep for expansion
-    }
+    const rows=groups[po];const d=rows.map(r=>({lc:r.lc_date,si:r.si_shared_date,rdd:r.tracker_rdd,etd:r.tracker_etd,eta:r.tracker_eta,obl:r.obl_ebl_received_date,final:r.final_docs_received_date}))
+    const first=a=>a.filter(Boolean).sort()[0]||null;const last=a=>a.filter(Boolean).sort().reverse()[0]||null
+    map[po]={normalized_po:po,partial_shipment_count:rows.length,first_lc_date:first(d.map(x=>x.lc)),latest_si_shared_date:last(d.map(x=>x.si)),earliest_tracker_rdd:first(d.map(x=>x.rdd)),earliest_tracker_etd:first(d.map(x=>x.etd)),earliest_tracker_eta:first(d.map(x=>x.eta)),latest_obl_ebl_received_date:last(d.map(x=>x.obl)),latest_final_docs_received_date:last(d.map(x=>x.final)),tracker_detail_rows:rows}
   })
-  return summaryMap
+  return map
 }
-
-// Step 3: Build Eagle_Eye_PO_Summary + keep detail rows
-function buildEagleSummaryAndExpand(){
-  const groups={}
-  _data.eagle.forEach(e=>{
-    const po=e.normalized_po
-    if(!groups[po])groups[po]=[]
-    groups[po].push(e)
-  })
-  const summaryMap={}
+function buildEagleSummary(){
+  const groups={};_data.eagle.forEach(e=>{const po=e.normalized_po;if(!groups[po])groups[po]=[];groups[po].push(e)})
+  const map={}
   Object.keys(groups).forEach(po=>{
-    const rows=groups[po]
-    const etas=rows.map(r=>r.eagle_eta).filter(Boolean).sort()
-    summaryMap[po]={
-      normalized_po:po,
-      container_count:rows.length,
-      earliest_eagle_eta:etas[0]||null,
-      eagle_detail_rows:rows
-    }
+    const rows=groups[po];const etas=rows.map(r=>r.eagle_eta).filter(Boolean).sort()
+    map[po]={normalized_po:po,container_count:rows.length,earliest_eagle_eta:etas[0]||null,eagle_detail_rows:rows}
   })
-  return summaryMap
+  return map
 }
 
-// Step 4: Build Active_Import_Master (full pipeline)
 function buildMaster(){
-  const settings=loadSettings()
-
-  // Start with SAP rows (these are the base)
-  const rows=[]
-
-  // For each SAP row, join with tracker summary
-  const tSumMap=buildTrackerSummaryAndExpand()
-  const eSumMap=buildEagleSummaryAndExpand()
-
+  const settings=loadSettings();crossRefAGI()
+  const tSum=buildTrackerSummary();const eSum=buildEagleSummary();const rows=[]
   _data.sap.forEach(sapRow=>{
-    const po=sapRow.normalized_po
-    const tSum=tSumMap[po]
-    const eSum=eSumMap[po]
-
-    // Determine partial_shipment_count and container_count for visibility
-    const partialCount=tSum?tSum.partial_shipment_count:null
-    const containerCount=eSum?eSum.container_count:null
-
-    // Visibility labels (matching M-code exactly)
+    const po=sapRow.normalized_po;const ts=tSum[po];const es=eSum[po]
+    const pc=ts?ts.partial_shipment_count:null;const cc=es?es.container_count:null
     let vis
-    if(partialCount===null&&containerCount===null) vis='No Tracker or shipment visibility'
-    else if(partialCount===null) vis='Tracker not updated / shipment visible'
-    else if(containerCount===null) vis='Tracker visible / shipment visibility not yet available'
+    if(pc===null&&cc===null)vis='No Tracker or shipment visibility'
+    else if(pc===null)vis='Tracker not updated / shipment visible'
+    else if(cc===null)vis='Tracker visible / shipment visibility not yet available'
     else vis='In Tracker and Eagle Eye'
-
-    // Expand eagle_detail_rows → container-level output
-    const eagleDetailRows=eSum?eSum.eagle_detail_rows:[{container_no:null,tracking_link:null,shipment_status:null,eagle_eta:null}]
-
-    eagleDetailRows.forEach(eRow=>{
-      const base={
-        // Fields from SAP (removing material and original_sap_po as M-code does)
-        purchasing_document:sapRow.purchasing_document,
-        product_description:sapRow.product_description,
-        open_qty:sapRow.open_qty,
-        normalized_po:po,
-        agi_key:sapRow.agi_key,
-        source_country_raw:sapRow.source_country_raw,
-        source_country:sapRow.source_country || '',
-        agi_matched:sapRow.agi_matched,
-
-        // Fields from Tracker Summary
-        partial_shipment_count:partialCount,
-        first_lc_date:tSum?tSum.first_lc_date:null,
-        latest_si_shared_date:tSum?tSum.latest_si_shared_date:null,
-        earliest_tracker_rdd:tSum?tSum.earliest_tracker_rdd:null,
-        earliest_tracker_etd:tSum?tSum.earliest_tracker_etd:null,
-        earliest_tracker_eta:tSum?tSum.earliest_tracker_eta:null,
-        latest_obl_ebl_received_date:tSum?tSum.latest_obl_ebl_received_date:null,
-        latest_final_docs_received_date:tSum?tSum.latest_final_docs_received_date:null,
-
-        // Fields from Eagle Summary
-        container_count:containerCount,
-        earliest_eagle_eta:eSum?eSum.earliest_eagle_eta:null,
-
-        // Fields from expanded Eagle detail
-        container_no:eRow.container_no&&eRow.container_no!=='-'?eRow.container_no:null,
-        tracking_link:eRow.tracking_link&&eRow.tracking_link!=='-'?eRow.tracking_link:null,
-        shipment_status:eRow.shipment_status||null,
-        eagle_eta:eRow.eagle_eta,
-
-        // Fields from expanded Tracker detail (use first partial shipment as default)
-        tracker_overall_status:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].tracker_overall_status:null,
-        lc_date:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].lc_date:null,
-        si_shared_date:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].si_shared_date:null,
-        tracker_rdd:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].tracker_rdd:null,
-        tracker_etd:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].tracker_etd:null,
-        tracker_eta:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].tracker_eta:null,
-        obl_ebl_received_date:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].obl_ebl_received_date:null,
-        final_docs_received_date:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].final_docs_received_date:null,
-        partial_shipment_no:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].partial_shipment_no:null,
-
+    const edr=es?es.eagle_detail_rows:[{container_no:null,tracking_link:null,shipment_status:null,eagle_eta:null}]
+    edr.forEach(eRow=>{
+      rows.push(evaluateRisk({
+        purchasing_document:sapRow.purchasing_document,product_description:sapRow.product_description,open_qty:sapRow.open_qty,normalized_po:po,source_country_raw:sapRow.source_country_raw,source_country:sapRow.source_country||'',agi_matched:sapRow.agi_matched,
+        partial_shipment_count:pc,first_lc_date:ts?ts.first_lc_date:null,latest_si_shared_date:ts?ts.latest_si_shared_date:null,earliest_tracker_rdd:ts?ts.earliest_tracker_rdd:null,earliest_tracker_etd:ts?ts.earliest_tracker_etd:null,earliest_tracker_eta:ts?ts.earliest_tracker_eta:null,latest_obl_ebl_received_date:ts?ts.latest_obl_ebl_received_date:null,latest_final_docs_received_date:ts?ts.latest_final_docs_received_date:null,
+        container_count:cc,earliest_eagle_eta:es?es.earliest_eagle_eta:null,container_no:eRow.container_no&&eRow.container_no!=='-'?eRow.container_no:null,tracking_link:eRow.tracking_link&&eRow.tracking_link!=='-'?eRow.tracking_link:null,shipment_status:eRow.shipment_status||null,eagle_eta:eRow.eagle_eta,
+        tracker_overall_status:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_overall_status:null,lc_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].lc_date:null,si_shared_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].si_shared_date:null,tracker_rdd:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_rdd:null,tracker_etd:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_etd:null,tracker_eta:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_eta:null,obl_ebl_received_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].obl_ebl_received_date:null,final_docs_received_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].final_docs_received_date:null,partial_shipment_no:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].partial_shipment_no:null,
         data_visibility_status:vis
-      }
-
-      // Evaluate risk on this row
-      rows.push(evaluateRisk(base,settings))
+      },settings))
     })
   })
-
   return rows.sort((a,b)=>a.normalized_po.localeCompare(b.normalized_po))
 }
 
-// ===================== RISK EVALUATION =====================
 function evaluateRisk(row,settings){
-  const thr=settings||loadSettings()
-  const exc=[]
-
-  // Check visibility-based exceptions
+  const thr=settings||loadSettings();const exc=[]
   if(row.partial_shipment_count===null)exc.push('No Tracker Entry')
   if(row.container_count===null)exc.push('No Eagle Eye Entry')
-
-  // Check overdue dates
-  const lc=row.first_lc_date||row.lc_date
-  const si=row.latest_si_shared_date||row.si_shared_date
-  const eta=row.earliest_tracker_eta||row.tracker_eta
+  const lc=row.first_lc_date||row.lc_date;const si=row.latest_si_shared_date||row.si_shared_date;const eta=row.earliest_tracker_eta||row.tracker_eta
   const statusNum=row.shipment_status?parseInt(row.shipment_status.replace(/\D/g,''))||0:0
-
-  if(lc&&!si){
-    const d=daysAgo(lc); if(d!==null&&d>0&&d>=thr.lc_crit)exc.push(`LC Overdue (${d}d)`)
-    else if(d!==null&&d>0&&d>=thr.lc_urg)exc.push(`LC Overdue (${d}d)`)
-  }
-  if(si&&statusNum<6){
-    const d=daysAgo(si); if(d!==null&&d>0&&d>=thr.si_crit)exc.push(`SI Overdue (${d}d)`)
-    else if(d!==null&&d>0&&d>=thr.si_urg)exc.push(`SI Overdue (${d}d)`)
-  }
-  if(eta&&statusNum<6){
-    const d=daysAgo(eta); if(d!==null&&d>0&&d>=thr.eta_crit)exc.push(`ETA Overdue (${d}d)`)
-    else if(d!==null&&d>0&&d>=thr.eta_urg)exc.push(`ETA Overdue (${d}d)`)
-  }
-
+  if(lc&&!si){const d=daysAgo(lc);if(d!==null&&d>0){if(d>=thr.lc_crit)exc.push(`LC Overdue (${d}d)`);else if(d>=thr.lc_urg)exc.push(`LC Overdue (${d}d)`)}}
+  if(si&&statusNum<6){const d=daysAgo(si);if(d!==null&&d>0){if(d>=thr.si_crit)exc.push(`SI Overdue (${d}d)`);else if(d>=thr.si_urg)exc.push(`SI Overdue (${d}d)`)}}
+  if(eta&&statusNum<6){const d=daysAgo(eta);if(d!==null&&d>0){if(d>=thr.eta_crit)exc.push(`ETA Overdue (${d}d)`);else if(d>=thr.eta_urg)exc.push(`ETA Overdue (${d}d)`)}}
   if(!exc.length)exc.push('On Track')
-
-  row.all_exceptions=exc.join('; ')
-  const primary=exc[0].split(' (')[0].trim()
-
-  // Urgency map
-  const uMap={'No Tracker Entry':'Critical','LC Overdue':'Critical','SI Overdue':'Critical','ETA Overdue':'Critical','No Eagle Eye Entry':'Urgent','On Track':'Normal'}
-  row.primary_exception=primary
-  row.urgency=uMap[primary]||'Important'
-  const oMap={'No Tracker Entry':'Planning Manager','LC Overdue':'Supply Chain','SI Overdue':'Supply Chain','ETA Overdue':'Imports Team','No Eagle Eye Entry':'Planning Manager','On Track':'Planning Manager'}
-  row.recommended_owner=oMap[primary]||'Planning Manager'
-  const aMap={'No Tracker Entry':'Create tracker entry for PO','LC Overdue':'Follow up on LC issuance','SI Overdue':'Follow up on SI submission','ETA Overdue':'Expedite shipment tracking','No Eagle Eye Entry':'Add PO to Eagle Eye monitoring','On Track':'Monitor regularly'}
-  row.recommended_next_action=aMap[primary]||'Review'
+  row.all_exceptions=exc.join('; ');const primary=exc[0].split(' (')[0].trim();row.primary_exception=primary
+  const u={'No Tracker Entry':'Critical','LC Overdue':'Critical','SI Overdue':'Critical','ETA Overdue':'Critical','No Eagle Eye Entry':'Urgent','On Track':'Normal'}
+  row.urgency=u[primary]||'Important'
+  const o={'No Tracker Entry':'Planning Manager','LC Overdue':'Supply Chain','SI Overdue':'Supply Chain','ETA Overdue':'Imports Team','No Eagle Eye Entry':'Planning Manager','On Track':'Planning Manager'}
+  row.recommended_owner=o[primary]||'Planning Manager'
+  const a={'No Tracker Entry':'Create tracker entry for PO','LC Overdue':'Follow up on LC issuance','SI Overdue':'Follow up on SI submission','ETA Overdue':'Expedite shipment tracking','No Eagle Eye Entry':'Add PO to Eagle Eye monitoring','On Track':'Monitor regularly'}
+  row.recommended_next_action=a[primary]||'Review'
   return row
 }
 
 function buildQualityLog(){
-  const issues=[]
-  const sap=_data.sap, tracker=_data.tracker, eagle=_data.eagle, pm=_data.pm
+  const issues=[];const sap=_data.sap,tracker=_data.tracker,eagle=_data.eagle,pm=_data.pm
   if(!sap.length)issues.push({source:'SAP',severity:'Error',issue:'SAP file empty',detail:'No PO data'})
-  else{
-    const matched=sap.filter(r=>r.agi_matched).length
-    const unmatched=sap.length-matched
-    if(unmatched>0){
-      issues.push({source:'SAP → Product Master',severity:'Warning',issue:`${unmatched}/${sap.length} materials unmatched`,detail:`${unmatched} SAP materials have no Product Master AGI match`})
-    }
-    const noSrc=sap.filter(r=>!r.source_country).length
-    if(noSrc>0)issues.push({source:'SAP',severity:'Warning',issue:`${noSrc} PO rows no Source Country`,detail:'Lead time rules cannot resolve'})
-    const zeroQty=sap.filter(r=>r.open_qty===0).length
-    if(zeroQty>0)issues.push({source:'SAP',severity:'Info',issue:`${zeroQty} PO rows zero open qty`,detail:'Fully delivered but still open?'})
-  }
+  else{const matched=sap.filter(r=>r.agi_matched).length,u=sap.length-matched;if(u>0)issues.push({source:'SAP → Product Master',severity:'Warning',issue:`${u}/${sap.length} materials unmatched`,detail:`${u} SAP materials have no AGI match`});const ns=sap.filter(r=>!r.source_country).length;if(ns>0)issues.push({source:'SAP',severity:'Warning',issue:`${ns} PO rows no Source Country`,detail:'Lead time rules cannot resolve'});const zq=sap.filter(r=>r.open_qty===0).length;if(zq>0)issues.push({source:'SAP',severity:'Info',issue:`${zq} PO rows zero open qty`,detail:'Fully delivered but still open?'})}
   if(!tracker.length)issues.push({source:'Tracker',severity:'Warning',issue:'Tracker empty',detail:'No milestone data'})
-  else{
-    const sapPos=new Set(sap.map(r=>r.normalized_po))
-    const tPos=new Set(tracker.map(r=>r.normalized_po))
-    const orphan=[...tPos].filter(p=>!sapPos.has(p))
-    if(orphan.length)issues.push({source:'Tracker',severity:'Info',issue:`${orphan.length} POs in Tracker not in SAP`,detail:'May be historical or non-import POs'})
-  }
+  else{const sp=new Set(sap.map(r=>r.normalized_po)),tp=new Set(tracker.map(r=>r.normalized_po)),o=[...tp].filter(p=>!sp.has(p));if(o.length)issues.push({source:'Tracker',severity:'Info',issue:`${o.length} POs in Tracker not in SAP`,detail:'May be historical or non-import'})}
   if(!eagle.length)issues.push({source:'Eagle Eye',severity:'Warning',issue:'Eagle Eye empty',detail:'No shipment tracking'})
-  else{
-    const sapPos=new Set(sap.map(r=>r.normalized_po))
-    const ePos=new Set(eagle.map(r=>r.normalized_po))
-    const orphan=[...ePos].filter(p=>!sapPos.has(p))
-    if(orphan.length)issues.push({source:'Eagle Eye',severity:'Info',issue:`${orphan.length} POs in Eagle Eye not in SAP`,detail:'May be completed or non-import'})
-  }
+  else{const sp=new Set(sap.map(r=>r.normalized_po)),ep=new Set(eagle.map(r=>r.normalized_po)),o=[...ep].filter(p=>!sp.has(p));if(o.length)issues.push({source:'Eagle Eye',severity:'Info',issue:`${o.length} POs in Eagle Eye not in SAP`,detail:'May be completed or non-import'})}
   if(!pm.length)issues.push({source:'Product Master',severity:'Error',issue:'Product Master empty',detail:'AGI mapping unavailable'})
-  else{
-    const countries=[...new Set(pm.map(r=>r.source_country_raw).filter(Boolean))]
-    issues.push({source:'Product Master',severity:'Info',issue:`${pm.length} products loaded`,detail:`Countries: ${countries.join(', ')}`})
-  }
+  else{const c=[...new Set(pm.map(r=>r.source_country_raw).filter(Boolean))];issues.push({source:'Product Master',severity:'Info',issue:`${pm.length} products loaded`,detail:`Countries: ${c.join(', ')}`})}
   _data.quality=issues
 }
 
-function runPipeline(){
-  document.getElementById('progress').style.display='block'
-  const bar=document.getElementById('barFill')
-  bar.style.width='10%'
-  setTimeout(()=>{
-    bar.style.width='30%'
-    crossRefAGI()
-    bar.style.width='60%'
-    _data.merged=buildMaster()
-    bar.style.width='85%'
-    buildQualityLog()
-    bar.style.width='100%'
-    setTimeout(renderDashboard,150)
-  },50)
+/* ===================== RUN & RENDER ===================== */
+async function runPipeline(){
+  document.getElementById('fileProgress').style.display='block'
+  document.getElementById('btnGenerate').disabled=true
+  const msg=document.getElementById('fileProgressMsg')
+  await new Promise(r=>setTimeout(r,50))
+  msg.textContent='Cross-referencing AGI codes…';await new Promise(r=>setTimeout(r,100))
+  crossRefAGI()
+  msg.textContent='Building tracker summary…';await new Promise(r=>setTimeout(r,100))
+  _data.merged=buildMaster()
+  msg.textContent='Building quality log…';await new Promise(r=>setTimeout(r,100))
+  buildQualityLog()
+  msg.textContent='Rendering dashboard…';await new Promise(r=>setTimeout(r,150))
+  document.getElementById('fileProgress').style.display='none'
+  _generatedOnce=true
+  document.getElementById('btnDownload').disabled=false
+  document.getElementById('dashboardEmpty').style.display='none'
+  document.getElementById('dashboardContent').style.display='block'
+  navigate('dashboard')
+  renderDashboard()
 }
-
-function rerunPipeline(){
-  if(_data.sap.length&&_data.tracker.length&&_data.eagle.length&&_data.pm.length) runPipeline()
-}
-
-// ===================== RENDER =====================
 function renderDashboard(){
-  document.getElementById('progress').style.display='none'
-  document.getElementById('dashboardSection').style.display='block'
-  const m=_data.merged
-  const uniquePos=new Set(m.map(r=>r.normalized_po))
-  document.getElementById('poCount').textContent=uniquePos.size+' POs'
-  const critical=m.filter(r=>r.urgency==='Critical').length
-  const urgent=m.filter(r=>r.urgency==='Urgent').length
-  const normal=m.filter(r=>r.urgency==='Normal').length
-  const important=m.filter(r=>r.urgency==='Important').length
-  const fullVis=m.filter(r=>r.data_visibility_status==='In Tracker and Eagle Eye').length
-  const agiMatched=m.filter(r=>r.agi_matched).length
+  const m=_data.merged;const up=new Set(m.map(r=>r.normalized_po))
+  document.getElementById('poCount').textContent=up.size;document.getElementById('navPoCount').textContent=up.size
+  const critical=m.filter(r=>r.urgency==='Critical').length,urgent=m.filter(r=>r.urgency==='Urgent').length,normal=m.filter(r=>r.urgency==='Normal').length,imp=m.filter(r=>r.urgency==='Important').length,fv=m.filter(r=>r.data_visibility_status==='In Tracker and Eagle Eye').length
   document.getElementById('statsGrid').innerHTML=
-    `<div class="stat-card"><div class="label">Total POs</div><div class="value">${uniquePos.size}</div></div>
-    <div class="stat-card"><div class="label">Rows (container-level)</div><div class="value">${m.length}</div></div>
-    <div class="stat-card"><div class="label">Critical</div><div class="value" style="color:var(--red)">${critical}</div></div>
-    <div class="stat-card"><div class="label">Urgent</div><div class="value" style="color:var(--orange)">${urgent}</div></div>
-    <div class="stat-card"><div class="label">On Track</div><div class="value" style="color:var(--green)">${normal}</div></div>
-    <div class="stat-card"><div class="label">In Tracker + Eagle Eye</div><div class="value">${fullVis}</div></div>`
+    `<div class="stat-card"><div class="glow"></div><div class="label">Total POs</div><div class="value">${up.size}</div><div class="sub">${m.length} container rows</div></div>
+    <div class="stat-card"><div class="glow"></div><div class="label">Critical</div><div class="value" style="color:var(--red)">${critical}</div><div class="sub">Needs immediate action</div></div>
+    <div class="stat-card"><div class="glow"></div><div class="label">Urgent</div><div class="value" style="color:var(--orange)">${urgent}</div><div class="sub">Requires attention</div></div>
+    <div class="stat-card"><div class="glow"></div><div class="label">On Track</div><div class="value" style="color:var(--green)">${normal}</div><div class="sub">No issues detected</div></div>
+    <div class="stat-card"><div class="glow"></div><div class="label">Full Visibility</div><div class="value">${fv}</div><div class="sub">Tracker + Eagle Eye</div></div>
+    <div class="stat-card"><div class="glow"></div><div class="label">AGI Matched</div><div class="value">${m.filter(r=>r.agi_matched).length}/${m.length}</div><div class="sub">Source Country resolved</div></div>`
   const owners=[...new Set(m.map(r=>r.recommended_owner).filter(Boolean))]
   document.getElementById('riskOwnerFilter').innerHTML=`<option value="">All Owners</option>${owners.map(o=>`<option value="${o}">${o}</option>`).join('')}`
-  renderTable()
-  renderRiskView()
-  renderQualityLog()
+  renderTable();renderRiskView();renderQualityLog()
 }
-
 function renderTable(){
-  const m=_data.merged
-  const q=document.getElementById('searchInput').value.toLowerCase()
-  const uf=document.getElementById('urgencyFilter').value
-  const vf=document.getElementById('visibilityFilter').value
-  const filtered=m.filter(r=>{
-    if(uf&&r.urgency!==uf)return false
-    if(vf&&r.data_visibility_status!==vf)return false
-    if(q&&![r.normalized_po,r.source_country,r.primary_exception,r.recommended_owner,r.product_description].some(f=>f&&String(f).toLowerCase().includes(q)))return false
-    return true
-  })
-  document.getElementById('rowCount').textContent=`${filtered.length} of ${m.length} rows (${new Set(filtered.map(r=>r.normalized_po)).size} unique POs)`
-  const cols=[
-    {k:'normalized_po',l:'PO'},
-    {k:'product_description',l:'Description'},
-    {k:'source_country',l:'Source Country'},
-    {k:'open_qty',l:'Open Qty'},
-    {k:'urgency',l:'Urgency'},
-    {k:'primary_exception',l:'Exception'},
-    {k:'recommended_owner',l:'Owner'},
-    {k:'recommended_next_action',l:'Action'},
-    {k:'data_visibility_status',l:'Visibility'},
-    {k:'first_lc_date',l:'LC Date'},
-    {k:'latest_si_shared_date',l:'SI Date'},
-    {k:'earliest_tracker_eta',l:'ETA (Tracker)'},
-    {k:'eagle_eta',l:'ETA (Eagle)'},
-    {k:'shipment_status',l:'EE Status'},
-    {k:'container_no',l:'Container'},
-    {k:'container_count',l:'# Containers'}
-  ]
-  document.getElementById('tableHead').innerHTML=`<tr>${cols.map(c=>`<th>${c.l}</th>`).join('')}</tr>`
-  document.getElementById('tableBody').innerHTML=filtered.map(r=>{
-    return `<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.product_description)}</td>
-    <td>${esc(r.source_country)}</td><td>${r.open_qty!=null?r.open_qty:''}</td>
-    <td><span class="status-badge status-${r.urgency||'Normal'}">${esc(r.urgency||'Normal')}</span></td>
-    <td>${esc(r.primary_exception)}</td><td>${esc(r.recommended_owner)}</td><td>${esc(r.recommended_next_action)}</td>
-    <td>${esc(abbrevVis(r.data_visibility_status))}</td><td>${esc(r.first_lc_date||r.lc_date||'')}</td>
-    <td>${esc(r.latest_si_shared_date||r.si_shared_date||'')}</td><td>${esc(r.earliest_tracker_eta||r.tracker_eta||'')}</td>
-    <td>${esc(r.eagle_eta||'')}</td><td>${esc(r.shipment_status||'')}</td>
-    <td>${esc(r.container_no||'')}</td><td>${r.container_count!=null?r.container_count:''}</td></tr>`
-  }).join('')
+  const m=_data.merged;const q=document.getElementById('searchInput').value.toLowerCase()
+  const uf=document.getElementById('urgencyFilter').value,vf=document.getElementById('visibilityFilter').value
+  const f=m.filter(r=>{if(uf&&r.urgency!==uf)return false;if(vf&&r.data_visibility_status!==vf)return false;if(q&&![r.normalized_po,r.source_country,r.primary_exception,r.recommended_owner,r.product_description].some(x=>x&&String(x).toLowerCase().includes(q)))return false;return true})
+  document.getElementById('rowCount').textContent=`${f.length} of ${m.length} rows (${new Set(f.map(r=>r.normalized_po)).size} POs)`
+  document.getElementById('tableWrap').innerHTML=f.length?`<table><thead><tr><th>PO</th><th>Description</th><th>Country</th><th>Qty</th><th>Urgency</th><th>Exception</th><th>Owner</th><th>Action</th><th>Visibility</th><th>LC</th><th>SI</th><th>ETA</th><th>Container</th></tr></thead><tbody>${f.map(r=>`<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.product_description)}</td><td>${esc(r.source_country)}</td><td>${r.open_qty||''}</td><td><span class="status-badge status-${r.urgency}">${r.urgency}</span></td><td>${esc(r.primary_exception)}</td><td>${esc(r.recommended_owner)}</td><td>${esc(r.recommended_next_action)}</td><td>${esc(av(r.data_visibility_status))}</td><td>${esc(r.first_lc_date||r.lc_date||'')}</td><td>${esc(r.latest_si_shared_date||r.si_shared_date||'')}</td><td>${esc(r.earliest_tracker_eta||r.tracker_eta||r.eagle_eta||'')}</td><td>${esc(r.container_no||'')}</td></tr>`).join('')}</tbody></table>`:'<div style="padding:20px;text-align:center;color:var(--text3)">No matching records</div>'
 }
-
-function abbrevVis(v){
-  const m={'In Tracker and Eagle Eye':'Tracker+Eagle','Tracker visible / shipment visibility not yet available':'Tracker Only','Tracker not updated / shipment visible':'Eagle Only','No Tracker or shipment visibility':'None'}
-  return m[v]||v
-}
-
+function av(v){const m={'In Tracker and Eagle Eye':'T+E','Tracker visible / shipment visibility not yet available':'T','Tracker not updated / shipment visible':'E','No Tracker or shipment visibility':'-'};return m[v]||v}
 function renderRiskView(){
-  const m=_data.merged
-  const uf=document.getElementById('riskUrgencyFilter').value
-  const of=document.getElementById('riskOwnerFilter').value
-  const filtered=m.filter(r=>{
-    if(uf&&r.urgency!==uf)return false
-    if(of&&r.recommended_owner!==of)return false
-    return true
-  })
-  const wrap=document.getElementById('riskTableWrap')
-  if(!filtered.length){wrap.innerHTML='<div style="padding:20px;color:var(--text3)">No matching records</div>';return}
-  wrap.innerHTML=`<table><thead><tr><th>PO</th><th>Description</th><th>Country</th><th>Urgency</th><th>Exception</th><th>Owner</th><th>Action</th><th>Visibility</th></tr></thead>
-  <tbody>${filtered.map(r=>`<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.product_description)}</td><td>${esc(r.source_country)}</td>
-  <td><span class="status-badge status-${r.urgency||'Normal'}">${esc(r.urgency||'Normal')}</span></td>
-  <td>${esc(r.primary_exception)}</td><td>${esc(r.recommended_owner)}</td><td>${esc(r.recommended_next_action)}</td>
-  <td>${esc(abbrevVis(r.data_visibility_status))}</td></tr>`).join('')}</tbody></table>`
+  const m=_data.merged;const uf=document.getElementById('riskUrgencyFilter').value,of=document.getElementById('riskOwnerFilter').value
+  const f=m.filter(r=>{if(uf&&r.urgency!==uf)return false;if(of&&r.recommended_owner!==of)return false;return true})
+  document.getElementById('riskTableWrap').innerHTML=f.length?`<table><thead><tr><th>PO</th><th>Description</th><th>Country</th><th>Urgency</th><th>Exception</th><th>Owner</th><th>Action</th><th>Vis</th></tr></thead><tbody>${f.map(r=>`<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.product_description)}</td><td>${esc(r.source_country)}</td><td><span class="status-badge status-${r.urgency}">${r.urgency}</span></td><td>${esc(r.primary_exception)}</td><td>${esc(r.recommended_owner)}</td><td>${esc(r.recommended_next_action)}</td><td>${esc(av(r.data_visibility_status))}</td></tr>`).join('')}</tbody></table>`:'<div style="padding:20px;text-align:center;color:var(--text3)">No matching records</div>'
 }
-
 function renderQualityLog(){
   const q=_data.quality
-  const wrap=document.getElementById('qualityTableWrap')
-  if(!q.length){wrap.innerHTML='<div style="padding:20px;color:var(--text3)">No issues found</div>';return}
-  wrap.innerHTML=`<table><thead><tr><th>Source</th><th>Severity</th><th>Issue</th><th>Detail</th></tr></thead>
-  <tbody>${q.map(r=>{
-    const sev=r.severity==='Error'?'🔴':r.severity==='Warning'?'🟡':'🔵'
-    return `<tr><td>${esc(r.source)}</td><td>${sev} ${esc(r.severity)}</td><td>${esc(r.issue)}</td><td>${esc(r.detail)}</td></tr>`
-  }).join('')}</tbody></table>`
+  document.getElementById('qualityTableWrap').innerHTML=q.length?`<table><thead><tr><th>Source</th><th>Severity</th><th>Issue</th><th>Detail</th></tr></thead><tbody>${q.map(r=>`<tr><td>${esc(r.source)}</td><td><span class="issue-icon ${r.severity==='Error'?'error':r.severity==='Warning'?'warning':'info'}">${r.severity==='Error'?'!':r.severity==='Warning'?'?':'i'}</span> ${esc(r.severity)}</td><td>${esc(r.issue)}</td><td>${esc(r.detail)}</td></tr>`).join('')}</tbody></table>`:'<div style="padding:20px;text-align:center;color:var(--text3)">No issues found</div>'
 }
+function autoReGenerate(){if(_generatedOnce&&_filesReady===4)runPipeline()}
 
-function switchTab(id,el){
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'))
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'))
-  document.getElementById(id).classList.add('active')
-  el.classList.add('active')
-  if(id==='tab-risk')renderRiskView()
-  if(id==='tab-quality')renderQualityLog()
-}
-
-// ===================== DOWNLOAD =====================
+/* ===================== DOWNLOAD ===================== */
 function downloadMasterData(){
-  const m=_data.merged
-  if(!m.length){alert('No data. Upload all 4 files first.');return}
-  const hdr=[
-    'normalized_po','product_description','open_qty','source_country_raw','agi_matched',
-    'partial_shipment_count','first_lc_date','latest_si_shared_date',
-    'earliest_tracker_rdd','earliest_tracker_etd','earliest_tracker_eta',
-    'latest_obl_ebl_received_date','latest_final_docs_received_date',
-    'container_count','earliest_eagle_eta',
-    'container_no','tracking_link','shipment_status','eagle_eta',
-    'tracker_overall_status','lc_date','si_shared_date',
-    'tracker_rdd','tracker_etd','tracker_eta',
-    'obl_ebl_received_date','final_docs_received_date','partial_shipment_no',
-    'data_visibility_status',
-    'all_exceptions','primary_exception','urgency','recommended_owner','recommended_next_action'
-  ]
-  const rows=[hdr]
-  m.forEach(r=>{
-    rows.push(hdr.map(k=>{
-      const v=r[k]; return v!=null?String(v):''
-    }))
-  })
-  const ws=XLSX.utils.aoa_to_sheet(rows)
-  ws['!cols']=hdr.map(h=>({wch:h.length<6?12:Math.min(h.length+3,30)}))
-  const wb=XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb,ws,'Master Data')
+  const m=_data.merged;if(!m.length){alert('Generate master data first.');return}
+  const hdr=['normalized_po','product_description','open_qty','source_country_raw','agi_matched','partial_shipment_count','first_lc_date','latest_si_shared_date','earliest_tracker_rdd','earliest_tracker_etd','earliest_tracker_eta','latest_obl_ebl_received_date','latest_final_docs_received_date','container_count','earliest_eagle_eta','container_no','tracking_link','shipment_status','eagle_eta','tracker_overall_status','lc_date','si_shared_date','tracker_rdd','tracker_etd','tracker_eta','obl_ebl_received_date','final_docs_received_date','partial_shipment_no','data_visibility_status','all_exceptions','primary_exception','urgency','recommended_owner','recommended_next_action']
+  const rows=[hdr];m.forEach(r=>rows.push(hdr.map(k=>{const v=r[k];return v!=null?String(v):''})))
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=hdr.map(h=>({wch:Math.min(h.length+3,30)}))
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Master Data')
   XLSX.writeFile(wb,`Import_Control_Tower_Master_Data_${new Date().toISOString().slice(0,10)}.xlsx`)
 }
+
+/* ===================== HARD REFRESH ===================== */
+async function hardRefresh(){
+  if(!confirm('This will clear ALL uploaded files and reset the system. Continue?'))return
+  await clearAllDB()
+  for(const k of ['sap','tracker','eagle','pm']){_fileMeta[k]=null;_data[k]=[]}
+  _data.merged=[];_data.quality=[];_generatedOnce=false
+  setFileUI('sap');setFileUI('tracker');setFileUI('eagle');setFileUI('pm')
+  document.getElementById('btnGenerate').disabled=true;document.getElementById('btnDownload').disabled=true
+  document.getElementById('dashboardContent').style.display='none';document.getElementById('dashboardEmpty').style.display='flex'
+  document.getElementById('poCount').textContent='0';document.getElementById('navPoCount').textContent='0'
+  navigate('files')
+}
+
+/* ===================== INIT ===================== */
+applySettingsToUI()
+// Load persisted files after a short delay to let the UI render
+setTimeout(loadPersistedFiles,100)
 </script>
 </body>
 </html>
