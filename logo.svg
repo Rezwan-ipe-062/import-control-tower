@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Rounded square background -->
+  <rect x="4" y="4" width="92" height="92" rx="22" fill="#087a47"/>
+
+  <!-- Inner tonal circle for depth -->
+  <circle cx="50" cy="50" r="36" fill="#065d36" opacity="0.12"/>
+
+  <!-- Minimal container outline -->
+  <rect x="28" y="32" width="44" height="40" rx="4" fill="none" stroke="#fff" stroke-width="2.8"/>
+
+  <!-- Forward arrow inside container -->
+  <polyline points="38,46 52,52 38,58" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Arrow extended line -->
+  <line x1="52" y1="52" x2="64" y2="52" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+</svg>

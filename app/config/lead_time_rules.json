@@ -1,0 +1,65 @@
+[
+    {
+        "rule_id": 1,
+        "source_country": "Syngenta, India",
+        "lc_lead_time_days": 30,
+        "si_lead_time_days": 15,
+        "document_follow_up_days": 10,
+        "default_rule": false
+    },
+    {
+        "rule_id": 2,
+        "source_country": "Syngenta, China",
+        "lc_lead_time_days": 45,
+        "si_lead_time_days": 20,
+        "document_follow_up_days": 14,
+        "default_rule": false
+    },
+    {
+        "rule_id": 3,
+        "source_country": "Syngenta, Korea",
+        "lc_lead_time_days": 35,
+        "si_lead_time_days": 15,
+        "document_follow_up_days": 10,
+        "default_rule": false
+    },
+    {
+        "rule_id": 4,
+        "source_country": "Syngenta, Singapore",
+        "lc_lead_time_days": 25,
+        "si_lead_time_days": 10,
+        "document_follow_up_days": 7,
+        "default_rule": false
+    },
+    {
+        "rule_id": 5,
+        "source_country": "Syngenta, Thailand",
+        "lc_lead_time_days": 30,
+        "si_lead_time_days": 14,
+        "document_follow_up_days": 10,
+        "default_rule": false
+    },
+    {
+        "rule_id": 6,
+        "source_country": "Syngenta, Japan",
+        "lc_lead_time_days": 40,
+        "si_lead_time_days": 20,
+        "document_follow_up_days": 14,
+        "default_rule": false
+    },
+    {
+        "rule_id": 7,
+        "source_country": "Syngenta, Vietnam",
+        "lc_lead_time_days": 30,
+        "si_lead_time_days": 14,
+        "document_follow_up_days": 10,
+        "default_rule": false
+    },
+    {
+        "rule_id": 8,
+        "default_rule": true,
+        "lc_lead_time_days": 45,
+        "si_lead_time_days": 20,
+        "document_follow_up_days": 14
+    }
+]

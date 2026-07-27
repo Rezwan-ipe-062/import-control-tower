@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Import Tracker — Teaching Note (Country Planning Manager)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --green-deep:#043927;--primary:#007A3D;--tertiary:#7AC143;--soft:#EAF7E8;
+  --hl:#DDF3C2;--blue:#0065A8;--amber:#F5B335;--red:#D94A38;--purple:#6E3FA3;
+  --ink:#163226;--muted:#5A7168;--outline:rgba(4,57,39,0.08);
+  --glass-bg:rgba(255,255,255,0.78);--glass-border:rgba(255,255,255,0.25);
+  --glass-shadow:0 18px 55px rgba(0,57,32,0.18);
+  --radius-lg:28px;--radius-md:18px;--radius-sm:10px;
+}
+body{font-family:Inter,sans-serif;background:#F4F9F2;color:var(--ink);line-height:1.6;min-height:100vh}
+.container{max-width:1180px;margin:0 auto;padding:20px}
+
+/* Hero */
+.hero{background:var(--green-deep);border-radius:var(--radius-lg);padding:48px 40px;margin-bottom:32px;color:#fff;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:400px;height:400px;background:radial-gradient(circle,rgba(0,122,61,0.3),transparent);border-radius:50%}
+.hero h1{font-size:48px;font-weight:900;letter-spacing:-0.04em;line-height:1;position:relative}
+.hero .subtitle{font-size:20px;font-weight:600;margin-top:12px;opacity:0.85;position:relative}
+.hero .badge{display:inline-block;background:rgba(255,255,255,0.15);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:0.4px;margin-top:16px;position:relative}
+.hero .meta{display:flex;gap:20px;margin-top:20px;flex-wrap:wrap;position:relative}
+.hero .meta span{font-size:14px;opacity:0.7}
+
+/* Glass Card */
+.glass{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--radius-xl,32px);box-shadow:var(--glass-shadow);padding:24px;margin-bottom:24px;transition:transform 0.15s ease}
+.glass:hover{transform:translateY(-2px)}
+.glass h2{font-size:24px;font-weight:800;letter-spacing:-0.035em;margin-bottom:8px}
+.glass h3{font-size:18px;font-weight:700;color:var(--primary);margin:20px 0 8px}
+.glass .tag{display:inline-block;background:var(--soft);color:var(--primary);padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.3px;margin-bottom:12px}
+
+/* Stats Grid */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:rgba(255,255,255,0.92);border:1px solid var(--outline);border-radius:var(--radius-md);padding:20px;text-align:center}
+.stat-card .num{font-size:32px;font-weight:900;letter-spacing:-0.04em;line-height:1}
+.stat-card .num.green{color:var(--primary)}
+.stat-card .num.amber{color:#8a5a00}
+.stat-card .num.red{color:var(--red)}
+.stat-card .num.blue{color:var(--blue)}
+.stat-card .label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:0.4px;margin-top:6px;text-transform:uppercase}
+
+/* Tables */
+.table-wrap{overflow-x:auto;border-radius:var(--radius-md)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--green-deep);color:#fff}
+th{padding:12px 16px;text-align:left;font-weight:700;font-size:12px;letter-spacing:0.3px;white-space:nowrap}
+td{padding:10px 16px;border-bottom:1px solid var(--outline);vertical-align:top}
+tr:hover td{background:var(--soft)}
+tr.highlight td{background:rgba(245,179,53,0.08)}
+.tag-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.2px}
+.tag-green{background:rgba(0,122,61,0.12);color:var(--primary)}
+.tag-amber{background:rgba(245,179,53,0.15);color:#8a5a00}
+.tag-red{background:rgba(217,74,56,0.1);color:var(--red)}
+.tag-blue{background:rgba(0,101,168,0.12);color:var(--blue)}
+.tag-purple{background:rgba(110,63,163,0.1);color:var(--purple)}
+.tag-gray{background:rgba(90,113,104,0.1);color:var(--muted)}
+
+/* Bar chart */
+.bar-chart{margin:12px 0}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.bar-label{width:200px;font-size:13px;font-weight:600;text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:24px;background:var(--outline);border-radius:12px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:12px;transition:width 0.8s ease;display:flex;align-items:center;padding-left:10px;font-size:11px;font-weight:700;color:#fff;min-width:30px}
+.bar-fill.primary{background:var(--primary)}
+.bar-fill.amber{background:var(--amber);color:#333}
+.bar-fill.blue{background:var(--blue)}
+.bar-fill.red{background:var(--red)}
+.bar-fill.purple{background:var(--purple)}
+.bar-fill.tertiary{background:var(--tertiary);color:#333}
+.bar-count{width:40px;font-size:13px;font-weight:700;text-align:left;flex-shrink:0}
+
+/* Section tabs for two-file view */
+.file-tabs{display:flex;gap:4px;margin-bottom:20px;background:rgba(4,57,39,0.05);border-radius:var(--radius-md);padding:4px}
+.file-tab{padding:10px 24px;border:none;border-radius:var(--radius-sm);font-family:Inter;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;background:transparent;color:var(--muted)}
+.file-tab.active{background:var(--green-deep);color:#fff}
+.file-tab:hover:not(.active){background:rgba(4,57,39,0.08)}
+.section{display:none}
+.section.active{display:block}
+
+/* Process Flow */
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}
+.flow-step{background:var(--green-deep);color:#fff;padding:8px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;letter-spacing:0.2px}
+.flow-arrow{color:var(--muted);font-size:18px;font-weight:300}
+
+/* Match venn visual */
+.venn{display:flex;gap:24px;align-items:center;justify-content:center;padding:24px;flex-wrap:wrap}
+.venn-circle{width:160px;height:160px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:36px;position:relative}
+.venn-circle.left{background:rgba(0,122,61,0.15);border:3px solid var(--primary);color:var(--primary)}
+.venn-circle.center{background:rgba(4,57,39,0.2);border:3px solid var(--green-deep);color:var(--green-deep);margin:0 -40px;z-index:2}
+.venn-circle.right{background:rgba(0,101,168,0.15);border:3px solid var(--blue);color:var(--blue)}
+.venn-label{font-size:11px;font-weight:600;letter-spacing:0.3px;margin-top:4px;text-transform:uppercase}
+.venn-sub{font-size:12px;font-weight:400;opacity:0.7;margin-top:2px}
+
+/* Collapse */
+.collapse-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:14px 0;user-select:none}
+.collapse-header:hover{opacity:0.8}
+.collapse-header .arrow{transition:transform 0.2s;font-size:14px;color:var(--muted)}
+.collapse-header.open .arrow{transform:rotate(90deg)}
+.collapse-body{padding-bottom:14px;overflow:hidden;max-height:0;transition:max-height 0.3s ease}
+.collapse-body.open{max-height:20000px}
+
+/* Responsive */
+@media(max-width:768px){
+  .hero{padding:32px 24px}
+  .hero h1{font-size:32px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .bar-label{width:120px;font-size:11px}
+  .venn-circle{width:120px;height:120px;font-size:24px}
+  .venn-circle.center{margin:0 -20px}
+  .file-tab{padding:8px 12px;font-size:12px}
+}
+@media(max-width:480px){
+  .stats{grid-template-columns:1fr}
+  .bar-row{flex-wrap:wrap}
+  .bar-label{width:100%;text-align:left}
+  .venn{flex-direction:column;gap:0}
+  .venn-circle.center{margin:-20px 0;z-index:2}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Import Tracker Deep Dive</h1>
+  <div class="subtitle">Data &amp; Process Teaching Note — from a Country Planning Manager's chair</div>
+  <div class="badge">Bangladesh IMC · 2026 Planning Cycle</div>
+  <div class="meta">
+    <span data-icon>&#128197;</span> Data Snapshot: 23 July 2026
+    <span data-icon>&#128196;</span> 2 Source Files · 284 Records
+    <span data-icon>&#128200;</span> 22+ Column Dimensions
+  </div>
+</div>
+
+<!-- QUICK STATS -->
+<div class="stats">
+  <div class="stat-card"><div class="num green">119</div><div class="label">BD TRACKER POs</div></div>
+  <div class="stat-card"><div class="num blue">165</div><div class="label">Eagle Eye Containers</div></div>
+  <div class="stat-card"><div class="num red">67</div><div class="label">LC Dates Missing</div></div>
+  <div class="stat-card"><div class="num amber">23</div><div class="label">Completed POs</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--green-deep)">64</div><div class="label">Matched POs</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--purple)">25</div><div class="label">Vendors</div></div>
+</div>
+
+<!-- FILE TABS -->
+<div class="file-tabs">
+  <button class="file-tab active" onclick="switchTab('bt')">BD TRACKER 2026 v1</button>
+  <button class="file-tab" onclick="switchTab('ee')">Eagle Eye</button>
+  <button class="file-tab" onclick="switchTab('match')">Match &amp; Gaps</button>
+  <button class="file-tab" onclick="switchTab('process')">Business Process</button>
+</div>
+
+<!-- ==================== BD TRACKER ==================== -->
+<div id="section-bt" class="section active">
+  <div class="glass">
+    <div class="tag">Planning Layer</div>
+    <h2>BD TRACKER — 2026 v1 &mdash; "Tracker file" sheet</h2>
+    <p style="color:var(--muted);margin-bottom:16px">This is the <strong>master planning workbook</strong>. It lives in the Country Planning Manager's domain and tracks every Purchase Order from LC initiation through document handover. Think of it as the <em>"what should happen"</em> view — the plan.</p>
+
+    <h3>Overall Status — 7 unique states</h3>
+    <div class="bar-chart">
+      <div class="bar-row"><span class="bar-label">LC yet to receive</span><div class="bar-track"><div class="bar-fill amber" style="width:56.3%">67</div></div><span class="bar-count">56%</span></div>
+      <div class="bar-row"><span class="bar-label">Completed</span><div class="bar-track"><div class="bar-fill primary" style="width:19.3%">23</div></div><span class="bar-count">19%</span></div>
+      <div class="bar-row"><span class="bar-label">SI shared — Waiting for schedule</span><div class="bar-track"><div class="bar-fill blue" style="width:13.4%">16</div></div><span class="bar-count">13%</span></div>
+      <div class="bar-row"><span class="bar-label">Draft received — waiting for OBL</span><div class="bar-track"><div class="bar-fill purple" style="width:6.7%">8</div></div><span class="bar-count">7%</span></div>
+      <div class="bar-row"><span class="bar-label">Schedule received — Waiting for Draft</span><div class="bar-track"><div class="bar-fill tertiary" style="width:1.7%">2</div></div><span class="bar-count">2%</span></div>
+      <div class="bar-row"><span class="bar-label">Docs created, under Prasanna validation</span><div class="bar-track"><div class="bar-fill" style="background:#6E3FA3;width:1.7%">2</div></div><span class="bar-count">2%</span></div>
+      <div class="bar-row"><span class="bar-label">OBL Received — waiting for other docs</span><div class="bar-track"><div class="bar-fill" style="background:#2CB5E8;width:0.8%">1</div></div><span class="bar-count">1%</span></div>
+    </div>
+
+    <h3>Column Map — Every Field Explained</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Column</th><th>Coverage</th><th>What it means for the Planning Manager</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><strong>Overall Status</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td>Master state — the single source of truth for "where is this PO?" Drives all reporting. 7 variants.</td></tr>
+        <tr><td>2</td><td><strong>PO date</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td>Date the PO was raised in SAP. Baseline for lead-time measurement.</td></tr>
+        <tr><td>3</td><td><strong>PO</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td>SAP Purchase Order number. The <strong>primary key</strong> linking to Eagle Eye. Format: 10-digit numeric. Some have <code>-N</code> suffix (partial shipment indicator).</td></tr>
+        <tr><td>4</td><td><strong>HPO</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td>Hub PO — internal reference for the regional hub managing this order.</td></tr>
+        <tr><td>5</td><td><strong>AGI</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td>Material group code. Product category identifier.</td></tr>
+        <tr><td>6</td><td><strong>Description</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td>Product/material name — e.g., crop protection chemicals.</td></tr>
+        <tr><td>7</td><td><strong>NOC</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>No Objection Certificate reference. Regulatory clearance step.</td></tr>
+        <tr><td>8</td><td><strong>PI sent date</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td>Proforma Invoice sent to supplier. Marks the start of commercial negotiation.</td></tr>
+        <tr><td>9</td><td><strong>Scenario</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td>Supply chain routing classification. 10 variants. Example: "AMEA IMC Supplying to AMEA IMC" = regional hub to Bangladesh.</td></tr>
+        <tr><td>10</td><td><strong>Supply</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td>Country-of-supply code. IN (30), KR (20), FR (20), CN (19), SG (15) — top 5.</td></tr>
+        <tr><td>11</td><td><strong>Bank</strong></td><td><span class="tag-pill tag-amber">52/119 (44%)</span></td><td>Issuing bank for the LC. 67 blank = no LC yet. Key data point for cash-flow planning.</td></tr>
+        <tr class="highlight"><td>12</td><td><strong>LC Date</strong></td><td><span class="tag-pill tag-red">52/119 (44%)</span></td><td><strong>CRITICAL GAP.</strong> 67 of 119 POs have no LC Date. This is the single biggest data quality issue. Without LC Date, we cannot calculate LC lead-time, track overdue, or trigger escalations. Must be input from SAP once LC is opened.</td></tr>
+        <tr><td>13</td><td><strong>SI shared date</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Shipping Instruction sent to vendor. Triggers the scheduling process.</td></tr>
+        <tr><td>14</td><td><strong>RDD</strong></td><td><span class="tag-pill tag-green">119/119 (100%)</span></td><td><strong>Required Delivery Date</strong> (aka RTD). The anchor date for the entire planning timeline. Everything else is measured backward from this date. Near-perfect data quality.</td></tr>
+        <tr><td>15</td><td><strong>ETD</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Estimated Time of Departure (from supplier port).</td></tr>
+        <tr><td>16</td><td><strong>ETA</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Estimated Time of Arrival (at Bangladesh port).</td></tr>
+        <tr><td>17&ndash;25</td><td><strong>Draft BL → Hub docs courier</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Documentation pipeline — 9 sequential steps from Draft Bill of Lading receipt through courier of final documents to HSBC. Each date tracks handoff between teams (Prasanna, Hub, Bank). These are <strong>execution-layer</strong> dates, not planning dates.</td></tr>
+        <tr><td>26</td><td><strong>Additional comments</strong></td><td><span class="tag-pill tag-gray">Sparse</span></td><td>Free-text notes. Used for exceptions, reminders, and escalation context.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Supply Countries</h3>
+    <div class="bar-chart">
+      <div class="bar-row"><span class="bar-label">IN (India)</span><div class="bar-track"><div class="bar-fill primary" style="width:25.2%">30</div></div><span class="bar-count">25%</span></div>
+      <div class="bar-row"><span class="bar-label">KR (South Korea)</span><div class="bar-track"><div class="bar-fill blue" style="width:16.8%">20</div></div><span class="bar-count">17%</span></div>
+      <div class="bar-row"><span class="bar-label">FR (France)</span><div class="bar-track"><div class="bar-fill purple" style="width:16.8%">20</div></div><span class="bar-count">17%</span></div>
+      <div class="bar-row"><span class="bar-label">CN (China)</span><div class="bar-track"><div class="bar-fill amber" style="width:16.0%">19</div></div><span class="bar-count">16%</span></div>
+      <div class="bar-row"><span class="bar-label">SG (Singapore)</span><div class="bar-track"><div class="bar-fill tertiary" style="width:12.6%">15</div></div><span class="bar-count">13%</span></div>
+      <div class="bar-row"><span class="bar-label">TH (Thailand)</span><div class="bar-track"><div class="bar-fill red" style="width:3.4%">4</div></div><span class="bar-count">3%</span></div>
+      <div class="bar-row"><span class="bar-label">DE (Germany)</span><div class="bar-track"><div class="bar-fill" style="background:#2CB5E8;width:4.2%">5</div></div><span class="bar-count">4%</span></div>
+      <div class="bar-row"><span class="bar-label">Others (CH, NL, GB, AT, ID)</span><div class="bar-track"><div class="bar-fill" style="background:var(--muted);width:5.0%">6</div></div><span class="bar-count">5%</span></div>
+    </div>
+
+    <h3>Scenario Breakdown (Supply Chain Routing)</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Scenario</th><th>Count</th><th>Interpretation</th></tr></thead>
+      <tbody>
+        <tr><td>AMEA IMC Supplying to AMEA IMC</td><td><strong>42</strong></td><td>Regional hub (Singapore?) supplying Bangladesh — most common pattern</td></tr>
+        <tr><td>3rd Party AMEA Supplying to AMEA IMC</td><td><strong>21</strong></td><td>Third-party manufacturer in AMEA region supplying to Bangladesh IMC</td></tr>
+        <tr><td>BS Hub Supplying to AMEA IMC</td><td><strong>15</strong></td><td>Business Solutions Hub routing — central procurement entity</td></tr>
+        <tr><td>CN IMC Supplying to AMEA IMC</td><td><strong>14</strong></td><td>China IMC directly supplying Bangladesh</td></tr>
+        <tr><td>BS Hub Supplying to APAC IMC</td><td><strong>11</strong></td><td>BS Hub routing to APAC (cross-regional)</td></tr>
+        <tr><td>3rd Party APAC Supplying to APAC IMC</td><td><strong>5</strong></td><td>Third-party in APAC region</td></tr>
+        <tr><td>3rd Party CN Supplying to AMEA IMC</td><td><strong>4</strong></td><td>Chinese third-party manufacturer</td></tr>
+        <tr><td>APAC IMC Supplying to APAC IMC</td><td><strong>3</strong></td><td>APAC-internal supply</td></tr>
+        <tr><td>3rd Party EU Supplying to AMEA IMC</td><td><strong>3</strong></td><td>European third-party</td></tr>
+        <tr><td>3rd Party EAME Supplying to APAC IMC</td><td><strong>1</strong></td><td>Cross-regional EAME to APAC (rare)</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== EAGLE EYE ==================== -->
+<div id="section-ee" class="section">
+  <div class="glass">
+    <div class="tag">Execution Layer</div>
+    <h2>Eagle Eye — Container-Level Execution Tracker</h2>
+    <p style="color:var(--muted);margin-bottom:16px">Eagle Eye is the <strong>operational execution tracker</strong>. It lives with logistics/supply chain operations and tracks every container from order through arrival at the Bangladesh warehouse. Unlike BD TRACKER (1 row = 1 PO), here <strong>1 PO can span multiple containers</strong>. This is the <em>"what is actually happening"</em> view.</p>
+
+    <h3>Shipment Status Pipeline — 6 Stages</h3>
+    <div class="bar-chart">
+      <div class="bar-row"><span class="bar-label">1 Pending TP Flag/CCR</span><div class="bar-track"><div class="bar-fill amber" style="width:44.2%">73</div></div><span class="bar-count">44%</span></div>
+      <div class="bar-row"><span class="bar-label">6 Arrived at Door</span><div class="bar-track"><div class="bar-fill primary" style="width:17.6%">29</div></div><span class="bar-count">18%</span></div>
+      <div class="bar-row"><span class="bar-label">3 Booked</span><div class="bar-track"><div class="bar-fill blue" style="width:12.7%">21</div></div><span class="bar-count">13%</span></div>
+      <div class="bar-row"><span class="bar-label">5 Arrived at Port</span><div class="bar-track"><div class="bar-fill purple" style="width:10.3%">17</div></div><span class="bar-count">10%</span></div>
+      <div class="bar-row"><span class="bar-label">4 Sailed</span><div class="bar-track"><div class="bar-fill tertiary" style="width:8.5%">14</div></div><span class="bar-count">8%</span></div>
+      <div class="bar-row"><span class="bar-label">2 To be booked</span><div class="bar-track"><div class="bar-fill red" style="width:6.7%">11</div></div><span class="bar-count">7%</span></div>
+    </div>
+
+    <h3>Column Map — Every Field Explained</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Column</th><th>Coverage</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td>1-2</td><td><strong>From / To</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>Origin port (e.g., Singapore, Busan, Shanghai) and Destination port (typically Chittagong, Bangladesh)</td></tr>
+        <tr><td>3</td><td><strong>DDPO</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>DDPO number — matches PO with <code>G</code>/<code>F</code> prefix. Core linking field across files. Strip prefix to match BD TRACKER.</td></tr>
+        <tr><td>4</td><td><strong>OriDDPO</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>Original DDPO — preserved for audit trail when DDPO gets modified</td></tr>
+        <tr><td>5</td><td><strong>HubPO</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>Hub-side PO reference (connects to BD TRACKER HPO)</td></tr>
+        <tr><td>6</td><td><strong>Material Description</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>Product name — same item as BD TRACKER Description but at container granularity</td></tr>
+        <tr><td>7</td><td><strong>Container No.</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>The physical container ID. This is Eagle Eye's unique identifier per row.</td></tr>
+        <tr><td>8</td><td><strong>Tracking</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Carrier tracking number/URL for real-time container tracking</td></tr>
+        <tr><td>9</td><td><strong>Status</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>6-stage lifecycle: Pending → To be booked → Booked → Sailed → Arrived at Port → Arrived at Door</td></tr>
+        <tr><td>10</td><td><strong>EAD</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td><strong>Expected Arrival Date</strong> at the warehouse (door). 100% coverage — the anchor date for execution tracking (parallel to RDD in planning).</td></tr>
+        <tr><td>11</td><td><strong>EAD (Week)</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>EAD bucketed into ISO week number for weekly planning reviews</td></tr>
+        <tr><td>12</td><td><strong>Vendor Name</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>25 unique vendors — from global chemical manufacturers to regional suppliers</td></tr>
+        <tr><td>13</td><td><strong>Carrier Name</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>9 unique shipping lines (Maersk, MSC, CMA CGM, etc.)</td></tr>
+        <tr><td>14</td><td><strong>ICR</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>Initial Container Received date — when the container was delivered to the freight forwarder</td></tr>
+        <tr><td>15</td><td><strong>ACP</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Actual Container Pickup date — when carrier actually picked up the container</td></tr>
+        <tr><td>16-17</td><td><strong>ETD / ATD</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Estimated vs Actual Time of Departure from origin. ATD confirms the vessel has sailed.</td></tr>
+        <tr><td>18-19</td><td><strong>AAC / ICC</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Actual Arrival at Container yard / Inland Container Depot (Bangladesh-side milestones)</td></tr>
+        <tr><td>20-23</td><td><strong>ETA / Probability / Confidence / ATA</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>ETA is the estimated arrival at Bangladesh port. Probability of Meeting ETA is a calculated score (0-1) with confidence level. ATA = Actual Time of Arrival. Together they tell you: "will this container make its ETA?"</td></tr>
+        <tr><td>24</td><td><strong>AAD</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Actual Arrival at Door — the final milestone when container reaches Bangladesh warehouse</td></tr>
+        <tr><td>25-28</td><td><strong>Priority / Impact / CCR / RCR</strong></td><td><span class="tag-pill tag-amber">Partial</span></td><td>Priority (all blank — not yet implemented), Impact, Container Control Request, Released Container Request</td></tr>
+        <tr><td>29-30</td><td><strong>Order Qty / Shipped Qty</strong></td><td><span class="tag-pill tag-green">165/165</span></td><td>Ordered quantity vs what was actually shipped. Difference = potential short-shipment.</td></tr>
+        <tr><td>31-34</td><td><strong>Person / Comments / Planner / Comments</strong></td><td><span class="tag-pill tag-gray">Sparse</span></td><td>Origin-side person/notes and receiving planner/notes. Collaboration layer between origin and destination teams.</td></tr>
+        <tr><td>35-37</td><td><strong>ACP Target / ATD Target / Target Alerts</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Target dates for ACP and ATD milestones, with alert flags if these targets are breached</td></tr>
+        <tr><td>38</td><td><strong>Incoterm</strong></td><td><span class="tag-pill tag-blue">105/165 (64%)</span></td><td>CFR (48), CIF (21), CPT (7), FCA (5), rest blank or "-". Determines risk transfer and cost responsibility.</td></tr>
+        <tr><td>39-43</td><td><strong>Vendor Code / AGI Code / Lead AI / AI Supply Chain Contact</strong></td><td><span class="tag-pill tag-blue">Partial</span></td><td>Vendor and AI (Agri-Input) supply chain team reference codes</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Incoterm Distribution</h3>
+    <div class="bar-chart">
+      <div class="bar-row"><span class="bar-label">CFR (Cost &amp; Freight)</span><div class="bar-track"><div class="bar-fill primary" style="width:29.1%">48</div></div><span class="bar-count">29%</span></div>
+      <div class="bar-row"><span class="bar-label">CIF (Cost, Ins. &amp; Freight)</span><div class="bar-track"><div class="bar-fill blue" style="width:12.7%">21</div></div><span class="bar-count">13%</span></div>
+      <div class="bar-row"><span class="bar-label">CPT (Carriage Paid To)</span><div class="bar-track"><div class="bar-fill purple" style="width:4.2%">7</div></div><span class="bar-count">4%</span></div>
+      <div class="bar-row"><span class="bar-label">FCA (Free Carrier)</span><div class="bar-track"><div class="bar-fill amber" style="width:3.0%">5</div></div><span class="bar-count">3%</span></div>
+      <div class="bar-row"><span class="bar-label">Not Specified</span><div class="bar-track"><div class="bar-fill" style="background:var(--muted);width:50.9%">84</div></div><span class="bar-count">51%</span></div>
+    </div>
+
+    <h3>Container Tracking — Key Metrics</h3>
+    <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+      <div class="stat-card"><div class="num green">165</div><div class="label">Containers Tracked</div></div>
+      <div class="stat-card"><div class="num blue">73</div><div class="label">Still Pending (44%)</div></div>
+      <div class="stat-card"><div class="num primary">29</div><div class="label">Delivered at Door</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--purple)">25</div><div class="label">Unique Vendors</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--blue)">9</div><div class="label">Carriers</div></div>
+      <div class="stat-card"><div class="num amber">~51%</div><div class="label">Incoterm Not Specified</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MATCH & GAPS ==================== -->
+<div id="section-match" class="section">
+  <div class="glass">
+    <div class="tag">Reconciliation</div>
+    <h2>PO Match Analysis — BD TRACKER vs Eagle Eye</h2>
+    <p style="color:var(--muted);margin-bottom:16px">This is the <strong>critical bridge</strong> between planning and execution. Understanding which POs exist in both systems — and which don't — tells us where data is falling through the cracks.</p>
+
+    <h3>Match Key Logic</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>File</th><th>Raw Format</th><th>Transformation</th><th>Clean Key</th></tr></thead>
+      <tbody>
+        <tr><td>BD TRACKER (<code>PO</code>)</td><td><code>6590027103</code> or <code>6590028256 - 1</code></td><td>Strip <code>-N</code> suffix (split on hyphen)</td><td><code>6590027103</code></td></tr>
+        <tr><td>Eagle Eye (<code>DDPO</code>)</td><td><code>G6590027103</code> or <code>F6590028423</code></td><td>Strip leading <code>G</code> or <code>F</code> prefix</td><td><code>6590027103</code></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="venn">
+      <div class="venn-circle left">
+        55
+        <span class="venn-label">BT Only</span>
+        <span class="venn-sub">Futures, no execution</span>
+      </div>
+      <div class="venn-circle center">
+        64
+        <span class="venn-label">MATCHED</span>
+        <span class="venn-sub">Planning → Execution</span>
+      </div>
+      <div class="venn-circle right">
+        39
+        <span class="venn-label">EE Only</span>
+        <span class="venn-sub">Execution orphans?</span>
+      </div>
+    </div>
+
+    <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+      <div class="stat-card"><div class="num green">64</div><div class="label" style="font-size:11px">Matched POs (both systems)</div></div>
+      <div class="stat-card"><div class="num amber">55</div><div class="label" style="font-size:11px">BD TRACKER only — no execution yet</div></div>
+      <div class="stat-card"><div class="num blue">39</div><div class="label" style="font-size:11px">Eagle Eye only — not in planning</div></div>
+    </div>
+
+    <h3>Interpretation</h3>
+    <ul style="margin:8px 0 0 20px;color:var(--muted)">
+      <li><strong>55 BT-only POs</strong> — These are likely future POs where the LC hasn't been opened yet. They exist in the plan but haven't materialized as shipments. This matches the 67 "LC yet to receive" status.</li>
+      <li><strong>39 EE-only POs</strong> — These could be: (a) older POs already completed and removed from the active BD TRACKER sheet (moved to "Completed" or "Cancelled PO" sheets), or (b) POs that were added directly into execution without planning, or (c) POs from different planning cycles.</li>
+      <li><strong>64 matched</strong> — These are the active pipeline where both planning AND execution data exist. High-priority for the dashboard.</li>
+    </ul>
+
+    <h3>The Big Gaps</h3>
+    <div class="table-wrap" style="margin-top:8px">
+    <table>
+      <thead><tr><th>Gap</th><th>Severity</th><th>Root Cause</th><th>What We Need from SAP</th></tr></thead>
+      <tbody>
+        <tr class="highlight"><td><strong>LC Date missing on 67/119 POs</strong></td><td><span class="tag-pill tag-red">CRITICAL</span></td><td>LC not yet opened; data exists in SAP but hasn't been brought into the tracker</td><td>SAP open-PO dump to auto-populate LC dates</td></tr>
+        <tr><td><strong>39 Eagle Eye POs unmatched</strong></td><td><span class="tag-pill tag-amber">HIGH</span></td><td>Data in Eagle Eye but not in active BD TRACKER sheet — likely in Completed sheet</td><td>Verify against BD TRACKER Completed sheet (420 rows)</td></tr>
+        <tr><td><strong>~51% Incoterms unspecified in EE</strong></td><td><span class="tag-pill tag-amber">MEDIUM</span></td><td>Incoterm field not populated during data entry</td><td>Pull from SAP PO master data</td></tr>
+        <tr><td><strong>Priority field all blank in EE</strong></td><td><span class="tag-pill tag-blue">LOW</span></td><td>Feature exists but not operationalized</td><td>Define business rules; not SAP-dependent</td></tr>
+        <tr><td><strong>9 documentation columns with sparse data</strong></td><td><span class="tag-pill tag-blue">MEDIUM</span></td><td>Document tracking not consistently updated</td><td>Process compliance improvement</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>LC Lead-Time Rules (Planning Logic)</h3>
+    <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:8px">
+      <div class="stat-card" style="background:rgba(245,179,53,0.08)">
+        <div class="num amber">60</div>
+        <div class="label">Days — LC Critical threshold</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">If LC Date → RDD is &lt; 60 days, flag as critical</div>
+      </div>
+      <div class="stat-card" style="background:rgba(217,74,56,0.06)">
+        <div class="num red">90</div>
+        <div class="label">Days — LC Overdue threshold</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">If today - LC Date &gt; 90 days, flag as overdue</div>
+      </div>
+      <div class="stat-card" style="background:rgba(0,122,61,0.06)">
+        <div class="num green">Configurable</div>
+        <div class="label">Thresholds can be adjusted</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Per-product or per-vendor overrides possible</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== BUSINESS PROCESS ==================== -->
+<div id="section-process" class="section">
+  <div class="glass">
+    <div class="tag">How It Works</div>
+    <h2>The Import Process — Seen Through the Planning Manager's Eyes</h2>
+    <p style="color:var(--muted);margin-bottom:16px">This is the story of how a crop protection chemical goes from a supplier's factory to a Bangladesh warehouse, and how the two files track it.</p>
+
+    <h3>End-to-End Process Flow</h3>
+    <div class="flow">
+      <span class="flow-step">PO Raised in SAP</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">LC Opened via Bank</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">PI Sent to Supplier</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">Shipping Instructions Sent</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">Container Booked</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">Container Sails</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">Arrives at Port (CTG)</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">Docs Submitted to Bank</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">Arrives at Door</span>
+    </div>
+
+    <div class="stats" style="grid-template-columns:1fr 1fr;margin-top:20px">
+      <div class="glass" style="margin:0">
+        <h3 style="margin-top:0">BD TRACKER tracks:</h3>
+        <ul style="font-size:13px;color:var(--muted);margin-left:16px">
+          <li>The <strong>PO-level</strong> journey (1 row = 1 PO)</li>
+          <li>From PO creation → LC → documents → handover</li>
+          <li>Commercial &amp; compliance milestones</li>
+          <li>Bank interaction (LC, HSBC approval)</li>
+          <li>Document pipeline (9-step milestone chain)</li>
+          <li><strong>Owner: Country Planning Manager</strong></li>
+        </ul>
+      </div>
+      <div class="glass" style="margin:0">
+        <h3 style="margin-top:0">Eagle Eye tracks:</h3>
+        <ul style="font-size:13px;color:var(--muted);margin-left:16px">
+          <li>The <strong>container-level</strong> journey (1 PO = many containers)</li>
+          <li>From container pick-up → sailing → port arrival → door delivery</li>
+          <li>Physical logistics milestones</li>
+          <li>Carrier performance &amp; tracking</li>
+          <li>ETA probability &amp; confidence scoring</li>
+          <li><strong>Owner: Logistics / Supply Chain Ops</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Key Design Decisions Going Forward</h3>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Decision</th><th>Current State</th><th>Recommended</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Source of PO truth</strong></td><td>Manually entered in BD TRACKER</td><td>SAP open-PO dump as the authoritative source (validated with Nayeem Bhai)</td></tr>
+        <tr><td><strong>Linking key</strong></td><td>Strip G/F prefix from DDPO, strip -N from PO</td><td>Same logic — works cleanly but verify edge cases</td></tr>
+        <tr><td><strong>LC Date source</strong></td><td>Manually entered; 67 missing</td><td>Pull from SAP once LC is opened. The LC lead-time rules depend on this.</td></tr>
+        <tr><td><strong>RDD = RTD</strong></td><td>RDD is the planning anchor date</td><td>Confirmed — use RDD as the primary date axis for the dashboard</td></tr>
+        <tr><td><strong>Dashboard granularity</strong></td><td>Two separate files, manually reconciled</td><td>Unified view: PO-level with drill-down to container level. Similar to DropLog UX.</td></tr>
+        <tr><td><strong>Data missing strategy</strong></td><td>Tolerated (67 missing LC dates, etc.)</td><td>Show as explicit "Data Gap" — don't hide or fabricate. Drive accountability.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="text-align:center;padding:24px 0 40px;color:var(--muted);font-size:13px">
+  <span style="font-weight:700;color:var(--primary)">Next Step:</span> Request SAP open-PO sample dump from Nayeem Bhai to validate data model before building dashboard.<br>
+  <span style="font-size:11px">Import Tracker Teaching Note · Built from BD TRACKER 2026 v1 + Eagle Eye raw data · 23 July 2026</span>
+</div>
+
+</div>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.file-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+    "default": {
+        "lc_overdue_critical_days": 7,
+        "lc_overdue_urgent_days": 3,
+        "si_overdue_critical_days": 7,
+        "si_overdue_urgent_days": 3,
+        "eta_overdue_critical_days": 14,
+        "eta_overdue_urgent_days": 7,
+        "eta_probability_critical": 0.3,
+        "eta_probability_urgent": 0.5,
+        "eta_probability_important": 0.7
+    },
+    "per_country": {}
+}

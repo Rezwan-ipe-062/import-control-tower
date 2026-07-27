@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Import Control Tower</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e17;--surface:#111827;--surface2:#1e293b;--surface3:#334155;
+  --border:#2d3a50;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --accent:#3b82f6;--accent2:#60a5fa;--green:#22c55e;--yellow:#eab308;
+  --orange:#f97316;--red:#ef4444;--purple:#a855f7;--cyan:#06b6d4
+}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;gap:16px}
+.header h1{font-size:20px;font-weight:700;background:linear-gradient(135deg,var(--accent2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .badge{font-size:11px;background:var(--surface2);color:var(--text2);padding:2px 10px;border-radius:10px}
+.container{max-width:1400px;margin:0 auto;padding:24px 32px}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden}
+.section-title{padding:16px 20px;font-size:14px;font-weight:600;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.section-title .count{font-size:12px;font-weight:400;color:var(--text2);margin-left:auto}
+.section-body{padding:20px}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat-card{background:var(--surface2);border-radius:8px;padding:14px 16px}
+.stat-card .label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.stat-card .value{font-size:22px;font-weight:700;margin-top:4px}
+.upload-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.upload-zone{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);position:relative}
+.upload-zone:hover{border-color:var(--accent);background:rgba(59,130,246,.08)}
+.upload-zone.done{border-color:var(--green);background:rgba(34,197,94,.06)}
+.upload-zone .icon{font-size:28px;margin-bottom:6px}
+.upload-zone .name{font-size:12px;color:var(--text2);margin-top:4px;word-break:break-all}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:10px 12px;text-align:left;font-weight:600;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;position:relative}
+th:hover{color:var(--accent2)}
+td{padding:8px 12px;border-bottom:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover td{background:rgba(59,130,246,.04)}
+.table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto}
+.status-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.status-Critical{background:rgba(239,68,68,.15);color:var(--red)}
+.status-Urgent{background:rgba(249,115,22,.15);color:var(--orange)}
+.status-Important{background:rgba(234,179,8,.15);color:var(--yellow)}
+.status-Normal{background:rgba(34,197,94,.15);color:var(--green)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent2)}
+.flex{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ml-auto{margin-left:auto}
+.mb-12{margin-bottom:12px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px}
+.tab{padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.badge-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2)}
+#progress{display:none;padding:20px;text-align:center;color:var(--text2)}
+#progress .bar{width:100%;height:4px;background:var(--surface2);border-radius:2px;margin-top:12px;overflow:hidden}
+#progress .bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:2px;transition:width .3s}
+.filter-bar{display:flex;gap:8px;padding:12px 20px;flex-wrap:wrap;align-items:center}
+.filter-bar input,.filter-bar select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12px}
+.filter-bar input::placeholder{color:var(--text3)}
+.lazy-warn{font-size:11px;color:var(--text3);padding:4px 12px;font-style:italic}
+@media(max-width:768px){.container{padding:12px 16px}.upload-grid{grid-template-columns:1fr}.header{padding:12px 16px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg width="32" height="32" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="url(#g)" stroke-width="6"/><path d="M30 60 L50 30 L70 60" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 52 L50 38 L65 52" fill="none" stroke="url(#g)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 46 L50 40 L58 46" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="28" r="3" fill="url(#g)"/><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs></svg>
+  <h1>Import Control Tower</h1>
+  <span class="badge">Bangladesh</span>
+  <span class="badge" id="poCount">0 POs</span>
+</div>
+
+<div class="container">
+
+<!-- Upload Section -->
+<div class="section">
+  <div class="section-title">Data Sources</div>
+  <div class="section-body">
+    <div class="upload-grid">
+      <div class="upload-zone" id="zone-sap">
+        <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'sap')">
+        <div class="icon">📦</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">SAP Open PO</div>
+        <div style="font-size:11px;color:var(--text3)">Columns A/B/I/N</div>
+        <div class="name"></div>
+      </div>
+      <div class="upload-zone" id="zone-tracker">
+        <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'tracker')">
+        <div class="icon">📋</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">BD Tracker</div>
+        <div style="font-size:11px;color:var(--text3)">Sheet: Tracker file</div>
+        <div class="name"></div>
+      </div>
+      <div class="upload-zone" id="zone-eagle">
+        <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'eagle')">
+        <div class="icon">🛰️</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Eagle Eye</div>
+        <div style="font-size:11px;color:var(--text3)">Sheet: Sheet1</div>
+        <div class="name"></div>
+      </div>
+      <div class="upload-zone" id="zone-pm">
+        <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'pm')">
+        <div class="icon">📘</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Product Master</div>
+        <div style="font-size:11px;color:var(--text3)">Sheet: Master</div>
+        <div class="name"></div>
+      </div>
+    </div>
+    <div id="progress">
+      <div>Processing pipeline…</div>
+      <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard Section -->
+<div class="section" id="dashboardSection" style="display:none">
+  <div class="section-title">
+    Dashboard
+    <div class="flex ml-auto">
+      <button class="btn btn-primary" onclick="downloadMasterData()">⬇ Download Master Data (.xlsx)</button>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="grid-4" id="statsGrid"></div>
+  </div>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="tab-table" onclick="switchTab('tab-table',this)">Master Data</div>
+    <div class="tab" data-tab="tab-risk" onclick="switchTab('tab-risk',this)">Risk View</div>
+    <div class="tab" data-tab="tab-quality" onclick="switchTab('tab-quality',this)">Quality Log</div>
+  </div>
+  <div class="tab-content active" id="tab-table">
+    <div class="filter-bar">
+      <input placeholder="Search PO, material, country…" id="searchInput" oninput="renderTable()">
+      <select id="urgencyFilter" onchange="renderTable()">
+        <option value="">All Urgencies</option>
+        <option value="Critical">Critical</option>
+        <option value="Urgent">Urgent</option>
+        <option value="Important">Important</option>
+        <option value="Normal">Normal</option>
+      </select>
+      <select id="visibilityFilter" onchange="renderTable()">
+        <option value="">All Visibility</option>
+        <option value="Full Visibility">Full</option>
+        <option value="SAP + Tracker">SAP + Tracker</option>
+        <option value="SAP + Eagle Eye">SAP + Eagle Eye</option>
+        <option value="SAP Only">SAP Only</option>
+      </select>
+      <span class="lazy-warn" id="rowCount"></span>
+    </div>
+    <div class="table-wrap" id="tableWrap"><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div>
+  </div>
+  <div class="tab-content" id="tab-risk">
+    <div class="filter-bar">
+      <select id="riskUrgencyFilter" onchange="renderRiskView()">
+        <option value="">All Urgencies</option>
+        <option value="Critical">Critical</option>
+        <option value="Urgent">Urgent</option>
+        <option value="Important">Important</option>
+        <option value="Normal">Normal</option>
+      </select>
+      <select id="riskOwnerFilter" onchange="renderRiskView()">
+        <option value="">All Owners</option>
+      </select>
+    </div>
+    <div class="table-wrap" id="riskTableWrap"></div>
+  </div>
+  <div class="tab-content" id="tab-quality">
+    <div class="table-wrap" id="qualityTableWrap"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ============ DATA STORE ============
+const _data = {sap:[],tracker:[],eagle:[],pm:[],merged:[],quality:[]}
+
+// ============ FILE HANDLING ============
+function handleFile(ev,key){
+  const f=ev.target.files[0]; if(!f)return
+  document.querySelector(`#zone-${key} .name`).textContent=f.name
+  document.getElementById(`zone-${key}`).classList.add('done')
+  const reader=new FileReader()
+  reader.onload=function(e){
+    const wb=XLSX.read(e.target.result,{type:'array'})
+    const sheets=wb.SheetNames
+    switch(key){
+      case 'sap': loadSAP(wb); break
+      case 'tracker': loadTracker(wb); break
+      case 'eagle': loadEagle(wb); break
+      case 'pm': loadPM(wb); break
+    }
+    if(_data.sap.length&&_data.tracker.length&&_data.eagle.length&&_data.pm.length) runPipeline()
+  }
+  reader.readAsArrayBuffer(f)
+}
+
+// ============ LOADERS ============
+function loadSAP(wb){
+  const sn=wb.SheetNames.includes('Open PO')?'Open PO':wb.SheetNames[0]
+  const ws=wb.Sheets[sn]
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1})
+  const cols=[0,1,8,13] // A,B,I,N = 0,1,8,13
+  const out=[]
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r||r.length<14)continue
+    const mat=String(r[0]||'').trim()
+    const po=String(r[2]||'').trim().replace(/\.0$/,'')
+    if(!mat||!po)continue
+    const qty=parseFloat(r[3])||0
+    if(po.startsWith('62'))continue
+    const po10=po.padStart(10,'0')
+    out.push({
+      material:mat, product_description:String(r[1]||'').trim(),
+      purchasing_document:po, open_qty:qty,
+      PO_10digit:po10, normalized_po:po10,
+      Material_Norm:mat.replace(/^0+/,'')
+    })
+  }
+  _data.sap=out
+}
+
+function loadTracker(wb){
+  const ws=wb.Sheets['Tracker file']; if(!ws){_data.tracker=[];return}
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1})
+  const out=[]
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r||r.length<20)continue
+    const os=String(r[0]||'').trim()
+    if(!os)continue
+    const rawPo=String(r[2]||'').trim()
+    const m=rawPo.match(/(\d{10})/)
+    if(!m)continue
+    const norm=m[1]
+    const shipM=rawPo.match(/-\s*(\d+)$/)
+    const shipNo=shipM?parseInt(shipM[1]):0
+    const p=(i)=>parseDate(r[i])
+    out.push({
+      overall_status:os, normalized_po:norm,
+      partial_shipment_no:shipNo,
+      original_tracker_po:rawPo,
+      lc_date:p(11), si_shared_date:p(12),
+      tracker_rdd:p(13), tracker_etd:p(14), tracker_eta:p(15),
+      obl_ebl_received_date:p(17), final_docs_received_date:p(18)
+    })
+  }
+  _data.tracker=out
+}
+
+function loadEagle(wb){
+  const ws=wb.Sheets['Sheet1']; if(!ws){_data.eagle=[];return}
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1})
+  const out=[]
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r||r.length<30)continue
+    const rawPo=String(r[2]||'').trim()
+    const norm=rawPo.replace(/\D/g,'').padStart(10,'0').slice(0,10)
+    if(norm.length!==10)continue
+    const p=(i)=>parseDate(r[i])
+    const probStr=String(r[20]||'').replace('-','')
+    const prob=probStr?parseFloat(probStr):null
+    out.push({
+      ddpo:rawPo, normalized_po:norm,
+      container_no:String(r[6]||'').trim(),
+      tracking:String(r[7]||'').trim(),
+      status:String(r[8]||'').trim(),
+      atd:p(16), eta:p(19), ata:p(22),
+      eta_probability:prob,
+      eta_confidence:String(r[21]||'').trim(),
+      order_qty:(r[26]?parseFloat(r[26]):0)||0
+    })
+  }
+  _data.eagle=out
+}
+
+function loadPM(wb){
+  const ws=wb.Sheets['Master']; if(!ws){_data.pm=[];return}
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1})
+  const out=[]
+  // Col C=2 (AGI code), Col F=5 (Source Country)
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r)continue
+    const agiStr=String(r[2]||'').trim()
+    if(!agiStr)continue
+    const agi=parseInt(agiStr); if(isNaN(agi))continue
+    out.push({AGI_Code:agi,source_country:String(r[5]||'').trim()})
+  }
+  _data.pm=out
+}
+
+// ============ HELPERS ============
+function parseDate(val){
+  if(!val||val==='-')return null
+  if(typeof val==='number'){
+    // Excel serial date
+    const d=new Date((val-25569)*86400000)
+    return isNaN(d.getTime())?null:d.toISOString().slice(0,10)
+  }
+  const d=new Date(val); if(!isNaN(d.getTime()))return d.toISOString().slice(0,10)
+  // Try parsing various text formats
+  const parts=String(val).split(/[-\/]/)
+  if(parts.length===3){
+    let y=parseInt(parts[2]),m=parseInt(parts[1])-1,d=parseInt(parts[0])
+    if(y<100)y+=2000
+    const dt=new Date(y,m,d)
+    if(!isNaN(dt.getTime()))return dt.toISOString().slice(0,10)
+  }
+  return null
+}
+
+function today(){const d=new Date();return d.toISOString().slice(0,10)}
+function daysBetween(a,b){
+  if(!a||!b)return null
+  return Math.round((new Date(b)-new Date(a))/(86400000))
+}
+function daysAgo(d){
+  if(!d)return null
+  return Math.round((Date.now()-new Date(d))/(86400000))
+}
+
+// ============ PROCESSING ============
+function crossRefAGI(){
+  const agiMap={}; _data.pm.forEach(p=>{agiMap[p.AGI_Code]=p.source_country})
+  _data.sap.forEach(row=>{
+    const agi=parseInt(row.Material_Norm)
+    row.AGI_Code=isNaN(agi)?null:agi
+    row.source_country=agiMap[agi]||null
+    row.AGI_Matched=!!row.source_country
+  })
+}
+
+function summarizeEagle(){
+  const map={}
+  _data.eagle.forEach(e=>{
+    const po=e.normalized_po
+    if(!map[po])map[po]={pos:[],containers:{},trackings:{},statuses:[],etas:[],probs:[]}
+    map[po].pos.push(po)
+    map[po].containers[e.container_no]=true
+    if(e.tracking)map[po].trackings[e.tracking]=true
+    const sm=e.status.match(/(\d+)/)
+    if(sm)map[po].statuses.push(parseInt(sm[1]))
+    if(e.eta)map[po].etas.push(e.eta)
+    if(e.eta_probability!=null)map[po].probs.push(e.eta_probability)
+  })
+  const out={}
+  Object.keys(map).forEach(po=>{
+    const g=map[po]
+    const st=g.statuses.length?Math.max(...g.statuses):0
+    const etas=g.etas.filter(Boolean).sort()
+    const pros=g.probs.filter(p=>p!=null)
+    out[po]={
+      container_count:Object.keys(g.containers).length,
+      container_list:Object.keys(g.containers).join(', '),
+      tracking_link_list:Object.keys(g.trackings).join(', '),
+      current_shipment_status:String(st),
+      shipment_eta:etas[0]||null,
+      min_eta_probability:pros.length?Math.min(...pros):null,
+      max_eta_probability:pros.length?Math.max(...pros):null
+    }
+  })
+  return out
+}
+
+function mergeAll(){
+  const eagleSum=summarizeEagle()
+  const merge={}
+  // Build SAP lookup
+  _data.sap.forEach(row=>{
+    const po=row.normalized_po
+    if(!merge[po])merge[po]={...row}
+  })
+  // Merge Tracker
+  const tMap={}
+  _data.tracker.forEach(t=>{
+    const po=t.normalized_po
+    if(!tMap[po])tMap[po]=t
+  })
+  Object.keys(tMap).forEach(po=>{
+    if(!merge[po])merge[po]={normalized_po:po}
+    Object.assign(merge[po],tMap[po])
+    merge[po].tracker_found=true
+  })
+  // Merge Eagle summary
+  Object.keys(eagleSum).forEach(po=>{
+    if(!merge[po])merge[po]={normalized_po:po}
+    Object.assign(merge[po],eagleSum[po])
+    merge[po].eagle_eye_found=true
+  })
+  // Fill defaults
+  Object.values(merge).forEach(row=>{
+    if(row.tracker_found===undefined)row.tracker_found=false
+    if(row.eagle_eye_found===undefined)row.eagle_eye_found=false
+    // Visibility
+    if(!row.tracker_found&&!row.eagle_eye_found)row.data_visibility_status='SAP Only'
+    else if(row.tracker_found&&!row.eagle_eye_found)row.data_visibility_status='SAP + Tracker'
+    else if(!row.tracker_found&&row.eagle_eye_found)row.data_visibility_status='SAP + Eagle Eye'
+    else row.data_visibility_status='Full Visibility'
+  })
+  return Object.values(merge).sort((a,b)=>a.normalized_po.localeCompare(b.normalized_po))
+}
+
+function evaluateRisk(row){
+  const thr={lc_crit:7,lc_urg:3,si_crit:7,si_urg:3,eta_crit:14,eta_urg:7,prob_crit:.3,prob_urg:.5,prob_imp:.7}
+  const exc=[]
+  if(!row.tracker_found)exc.push('No Tracker Entry')
+  if(!row.eagle_eye_found)exc.push('No Eagle Eye Entry')
+  const lc=row.lc_date,si=row.si_shared_date,eta=row.tracker_eta
+  const statusNum=row.current_shipment_status?parseInt(row.current_shipment_status)||0:0
+  if(lc&&!si){
+    const d=daysAgo(lc); if(d!==null&&d>0&&d>=thr.lc_crit)exc.push(`LC Overdue (${d}d)`)
+  }
+  if(si&&statusNum<6){
+    const d=daysAgo(si); if(d!==null&&d>0&&d>=thr.si_crit)exc.push(`SI Overdue (${d}d)`)
+  }
+  if(eta&&statusNum<6){
+    const d=daysAgo(eta); if(d!==null&&d>0&&d>=thr.eta_crit)exc.push(`ETA Overdue (${d}d)`)
+  }
+  const prob=row.max_eta_probability
+  if(prob!=null&&statusNum<4){
+    if(prob<=thr.prob_crit)exc.push(`Low ETA Probability (${Math.round(prob*100)}%)`)
+  }
+  if(!exc.length)exc.push('On Track')
+  row.all_exceptions=exc.join('; ')
+  row.primary_exception=exc[0].split(' (')[0].trim()
+  // Urgency map
+  const uMap={'No Tracker Entry':'Critical','LC Overdue':'Critical','SI Overdue':'Critical','ETA Overdue':'Critical','No Eagle Eye Entry':'Urgent','Low ETA Probability':'Urgent','On Track':'Normal'}
+  row.urgency=uMap[row.primary_exception]||'Important'
+  const oMap={'No Tracker Entry':'Planning Manager','LC Overdue':'Supply Chain','SI Overdue':'Supply Chain','ETA Overdue':'Imports Team','No Eagle Eye Entry':'Planning Manager','Low ETA Probability':'Imports Team','On Track':'Planning Manager'}
+  row.recommended_owner=oMap[row.primary_exception]||'Planning Manager'
+  const aMap={'No Tracker Entry':'Create tracker entry for PO','LC Overdue':'Follow up on LC issuance','SI Overdue':'Follow up on SI submission','ETA Overdue':'Expedite shipment tracking','No Eagle Eye Entry':'Add PO to Eagle Eye monitoring','Low ETA Probability':'Review contingency plan','On Track':'Monitor regularly'}
+  row.recommended_next_action=aMap[row.primary_exception]||'Review'
+  return row
+}
+
+function buildQualityLog(){
+  const issues=[]
+  const sap=_data.sap, tracker=_data.tracker, eagle=_data.eagle, pm=_data.pm
+  if(!sap.length)issues.push({source:'SAP',severity:'Error',issue:'SAP file empty',detail:'No PO data'})
+  else{
+    const matched=sap.filter(r=>r.AGI_Matched).length
+    const unmatched=sap.length-matched
+    if(unmatched>0){
+      const mats=sap.filter(r=>!r.AGI_Matched).map(r=>r.material).slice(0,20)
+      issues.push({source:'SAP → Product Master',severity:'Warning',issue:`${unmatched}/${sap.length} materials unmatched to AGI`,detail:`Unmatched: ${mats.join(', ')}${unmatched>20?'...':''}`})
+    }
+    const noSrc=sap.filter(r=>!r.source_country).length
+    if(noSrc>0)issues.push({source:'SAP',severity:'Warning',issue:`${noSrc} PO rows no Source Country`,detail:'Lead time rules cannot resolve'})
+    const zeroQty=sap.filter(r=>r.open_qty===0).length
+    if(zeroQty>0)issues.push({source:'SAP',severity:'Info',issue:`${zeroQty} PO rows zero open qty`,detail:'Fully delivered but open?'})
+  }
+  if(!tracker.length)issues.push({source:'Tracker',severity:'Warning',issue:'Tracker empty',detail:'No milestone data'})
+  else{
+    const sapPos=new Set(sap.map(r=>r.normalized_po))
+    const tPos=new Set(tracker.map(r=>r.normalized_po))
+    const orphan=[...tPos].filter(p=>!sapPos.has(p))
+    if(orphan.length)issues.push({source:'Tracker',severity:'Info',issue:`${orphan.length} POs in Tracker not in SAP`,detail:'Historical or non-import POs'})
+  }
+  if(!eagle.length)issues.push({source:'Eagle Eye',severity:'Warning',issue:'Eagle Eye empty',detail:'No shipment tracking'})
+  else{
+    const sapPos=new Set(sap.map(r=>r.normalized_po))
+    const ePos=new Set(eagle.map(r=>r.normalized_po))
+    const orphan=[...ePos].filter(p=>!sapPos.has(p))
+    if(orphan.length)issues.push({source:'Eagle Eye',severity:'Info',issue:`${orphan.length} POs in Eagle Eye not in SAP`,detail:'Completed or non-import'})
+    const noProb=eagle.filter(r=>r.eta_probability==null||isNaN(r.eta_probability)).length
+    if(noProb>0&&noProb<eagle.length)issues.push({source:'Eagle Eye',severity:'Info',issue:`${noProb}/${eagle.length} rows missing ETA probability`,detail:'Risk assessment limited'})
+  }
+  if(!pm.length)issues.push({source:'Product Master',severity:'Error',issue:'Product Master empty',detail:'AGI mapping unavailable'})
+  else{
+    const countries=[...new Set(pm.map(r=>r.source_country).filter(Boolean))]
+    issues.push({source:'Product Master',severity:'Info',issue:`${pm.length} products loaded`,detail:`Countries: ${countries.join(', ')}`})
+  }
+  _data.quality=issues
+}
+
+function runPipeline(){
+  document.getElementById('progress').style.display='block'
+  const bar=document.getElementById('barFill')
+
+  setTimeout(()=>{bar.style.width='20%';crossRefAGI()},50)
+  setTimeout(()=>{
+    bar.style.width='50%'
+    _data.merged=mergeAll()
+    _data.merged.forEach(row=>evaluateRisk(row))
+    buildQualityLog()
+    bar.style.width='100%'
+    setTimeout(renderDashboard,200)
+  },100)
+}
+
+// ============ RENDER ============
+function renderDashboard(){
+  document.getElementById('progress').style.display='none'
+  document.getElementById('dashboardSection').style.display='block'
+  const m=_data.merged
+  document.getElementById('poCount').textContent=m.length+' POs'
+  // Stats
+  const critical=m.filter(r=>r.urgency==='Critical').length
+  const urgent=m.filter(r=>r.urgency==='Urgent').length
+  const normal=m.filter(r=>r.urgency==='Normal').length
+  const fullVis=m.filter(r=>r.data_visibility_status==='Full Visibility').length
+  const agiMatched=m.filter(r=>r.AGI_Matched).length
+  document.getElementById('statsGrid').innerHTML=
+    `<div class="stat-card"><div class="label">Total POs</div><div class="value">${m.length}</div></div>
+    <div class="stat-card"><div class="label">Critical</div><div class="value" style="color:var(--red)">${critical}</div></div>
+    <div class="stat-card"><div class="label">Urgent</div><div class="value" style="color:var(--orange)">${urgent}</div></div>
+    <div class="stat-card"><div class="label">On Track</div><div class="value" style="color:var(--green)">${normal}</div></div>
+    <div class="stat-card"><div class="label">Full Visibility</div><div class="value">${fullVis}</div></div>
+    <div class="stat-card"><div class="label">AGI Matched</div><div class="value">${agiMatched}/${m.length}</div></div>`
+  // Populate owner filter
+  const owners=[...new Set(m.map(r=>r.recommended_owner).filter(Boolean))]
+  document.getElementById('riskOwnerFilter').innerHTML=`<option value="">All Owners</option>${owners.map(o=>`<option value="${o}">${o}</option>`).join('')}`
+  renderTable()
+  renderRiskView()
+  renderQualityLog()
+}
+
+function renderTable(){
+  const m=_data.merged
+  const q=document.getElementById('searchInput').value.toLowerCase()
+  const uf=document.getElementById('urgencyFilter').value
+  const vf=document.getElementById('visibilityFilter').value
+  const filtered=m.filter(r=>{
+    if(uf&&r.urgency!==uf)return false
+    if(vf&&r.data_visibility_status!==vf)return false
+    if(q&&![r.normalized_po,r.material,r.source_country,r.primary_exception,r.recommended_owner].some(f=>f&&String(f).toLowerCase().includes(q)))return false
+    return true
+  })
+  document.getElementById('rowCount').textContent=`${filtered.length} of ${m.length} rows`
+  const cols=[
+    {k:'normalized_po',l:'PO'},
+    {k:'material',l:'Material'},
+    {k:'product_description',l:'Description'},
+    {k:'source_country',l:'Source Country'},
+    {k:'open_qty',l:'Open Qty'},
+    {k:'urgency',l:'Urgency'},
+    {k:'primary_exception',l:'Exception'},
+    {k:'recommended_owner',l:'Owner'},
+    {k:'recommended_next_action',l:'Action'},
+    {k:'data_visibility_status',l:'Visibility'},
+    {k:'lc_date',l:'LC Date'},
+    {k:'si_shared_date',l:'SI Date'},
+    {k:'tracker_eta',l:'ETA'},
+    {k:'current_shipment_status',l:'EE Status'},
+    {k:'max_eta_probability',l:'ETA Prob'},
+    {k:'container_count',l:'Containers'}
+  ]
+  document.getElementById('tableHead').innerHTML=`<tr>${cols.map(c=>`<th>${c.l}</th>`).join('')}</tr>`
+  document.getElementById('tableBody').innerHTML=filtered.map(r=>{
+    const prob=r.max_eta_probability!=null?Math.round(r.max_eta_probability*100)+'%':''
+    return `<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.material)}</td><td>${esc(r.product_description)}</td>
+    <td>${esc(r.source_country)}</td><td>${r.open_qty!=null?r.open_qty:''}</td>
+    <td><span class="status-badge status-${r.urgency||'Normal'}">${esc(r.urgency||'Normal')}</span></td>
+    <td>${esc(r.primary_exception)}</td><td>${esc(r.recommended_owner)}</td><td>${esc(r.recommended_next_action)}</td>
+    <td>${esc(r.data_visibility_status)}</td><td>${esc(r.lc_date||'')}</td><td>${esc(r.si_shared_date||'')}</td>
+    <td>${esc(r.tracker_eta||'')}</td><td>${esc(r.current_shipment_status||'')}</td>
+    <td>${prob}</td><td>${r.container_count!=null?r.container_count:''}</td></tr>`
+  }).join('')
+}
+
+function renderRiskView(){
+  const m=_data.merged
+  const uf=document.getElementById('riskUrgencyFilter').value
+  const of=document.getElementById('riskOwnerFilter').value
+  const filtered=m.filter(r=>{
+    if(uf&&r.urgency!==uf)return false
+    if(of&&r.recommended_owner!==of)return false
+    return true
+  })
+  const wrap=document.getElementById('riskTableWrap')
+  if(!filtered.length){wrap.innerHTML='<div style="padding:20px;color:var(--text3)">No matching records</div>';return}
+  wrap.innerHTML=`<table><thead><tr><th>PO</th><th>Material</th><th>Country</th><th>Urgency</th><th>Exception</th><th>Owner</th><th>Action</th><th>Visibility</th></tr></thead>
+  <tbody>${filtered.map(r=>`<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.material)}</td><td>${esc(r.source_country)}</td>
+  <td><span class="status-badge status-${r.urgency||'Normal'}">${esc(r.urgency||'Normal')}</span></td>
+  <td>${esc(r.primary_exception)}</td><td>${esc(r.recommended_owner)}</td><td>${esc(r.recommended_next_action)}</td>
+  <td>${esc(r.data_visibility_status)}</td></tr>`).join('')}</tbody></table>`
+}
+
+function renderQualityLog(){
+  const q=_data.quality
+  const wrap=document.getElementById('qualityTableWrap')
+  if(!q.length){wrap.innerHTML='<div style="padding:20px;color:var(--text3)">No issues found</div>';return}
+  wrap.innerHTML=`<table><thead><tr><th>Source</th><th>Severity</th><th>Issue</th><th>Detail</th></tr></thead>
+  <tbody>${q.map(r=>{
+    const sev=r.severity==='Error'?'🔴':r.severity==='Warning'?'🟡':'🔵'
+    return `<tr><td>${esc(r.source)}</td><td>${sev} ${esc(r.severity)}</td><td>${esc(r.issue)}</td><td>${esc(r.detail)}</td></tr>`
+  }).join('')}</tbody></table>`
+}
+
+function switchTab(id,el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'))
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+  el.classList.add('active')
+  if(id==='tab-risk')renderRiskView()
+  if(id==='tab-quality')renderQualityLog()
+}
+
+// ============ DOWNLOAD ============
+function downloadMasterData(){
+  const m=_data.merged
+  if(!m.length){alert('No data to download. Please upload all 4 files first.');return}
+  const cols=[
+    'normalized_po','PO_10digit','material','Material_Norm','product_description',
+    'open_qty','source_country','AGI_Code','AGI_Matched',
+    'original_tracker_po','overall_status','lc_date','si_shared_date',
+    'tracker_rdd','tracker_etd','tracker_eta',
+    'obl_ebl_received_date','final_docs_received_date','partial_shipment_no',
+    'container_count','container_list','tracking_link_list',
+    'current_shipment_status','shipment_eta','min_eta_probability','max_eta_probability',
+    'tracker_found','eagle_eye_found','data_visibility_status',
+    'all_exceptions','primary_exception','urgency','recommended_owner','recommended_next_action'
+  ]
+  // Header row
+  const hdr=['PO_10digit','Material','Description','Open Qty','Source Country','AGI Code','AGI Matched',
+    'Tracker PO','Overall Status','LC Date','SI Date','RDD','ETD','ETA',
+    'OBL Date','Docs Date','Partial Ship',
+    'Containers','Container List','Tracking Links',
+    'EE Status','EE ETA','Min ETA Prob','Max ETA Prob',
+    'Tracker Found','Eagle Eye Found','Visibility',
+    'Exceptions','Primary Exception','Urgency','Recommended Owner','Recommended Action']
+  const rows=[hdr]
+  m.forEach(r=>{
+    rows.push([
+      r.normalized_po||'',r.material||'',r.product_description||'',
+      r.open_qty!=null?r.open_qty:'',r.source_country||'',
+      r.AGI_Code!=null?r.AGI_Code:'',r.AGI_Matched?'Yes':'No',
+      r.original_tracker_po||'',r.overall_status||'',r.lc_date||'',r.si_shared_date||'',
+      r.tracker_rdd||'',r.tracker_etd||'',r.tracker_eta||'',
+      r.obl_ebl_received_date||'',r.final_docs_received_date||'',
+      r.partial_shipment_no!=null?r.partial_shipment_no:'',
+      r.container_count!=null?r.container_count:'',r.container_list||'',r.tracking_link_list||'',
+      r.current_shipment_status||'',r.shipment_eta||'',
+      r.min_eta_probability!=null?r.min_eta_probability:'',
+      r.max_eta_probability!=null?r.max_eta_probability:'',
+      r.tracker_found?'Yes':'No',r.eagle_eye_found?'Yes':'No',r.data_visibility_status||'',
+      r.all_exceptions||'',r.primary_exception||'',r.urgency||'',r.recommended_owner||'',r.recommended_next_action||''
+    ])
+  })
+  const ws=XLSX.utils.aoa_to_sheet(rows)
+  // Column widths
+  ws['!cols']=[{wch:12},{wch:10},{wch:30},{wch:12},{wch:20},{wch:10},{wch:10},{wch:15},{wch:15},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:10},{wch:25},{wch:30},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:10},{wch:12},{wch:40},{wch:20},{wch:12},{wch:20},{wch:30}]
+  const wb=XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb,ws,'Master Data')
+  const dt=new Date().toISOString().slice(0,10)
+  XLSX.writeFile(wb,`Import_Control_Tower_Master_Data_${dt}.xlsx`)
+}
+
+function esc(s){return s!=null?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+</script>
+</body>
+</html>

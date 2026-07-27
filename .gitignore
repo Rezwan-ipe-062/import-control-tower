@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+node_modules/
+*.egg-info/
+dist/
+build/
+*.exe
+.DS_Store
+Thumbs.db
+**/__pycache__/
+
+# Real business data files — local only
+Files Shared With Me/
+Power Query Learning/
+app/reference/
+
+# Media
+*.m4a
+*.wav
+*.mp3
+*.docx
