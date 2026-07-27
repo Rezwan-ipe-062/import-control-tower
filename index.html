@@ -35,9 +35,9 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-hei
 .upload-zone .name{font-size:12px;color:var(--text2);margin-top:4px;word-break:break-all}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{padding:10px 12px;text-align:left;font-weight:600;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;position:relative}
+th{padding:10px 12px;text-align:left;font-weight:600;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
 th:hover{color:var(--accent2)}
-td{padding:8px 12px;border-bottom:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--border);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 tr:hover td{background:rgba(59,130,246,.04)}
 .table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto}
 .status-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
@@ -51,16 +51,15 @@ tr:hover td{background:rgba(59,130,246,.04)}
 .btn-primary:disabled{opacity:.4;cursor:not-allowed}
 .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
 .btn-outline:hover{border-color:var(--accent);color:var(--accent2)}
+.btn-sm{padding:4px 10px;font-size:11px}
 .flex{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .ml-auto{margin-left:auto}
-.mb-12{margin-bottom:12px}
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px}
 .tab{padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s}
 .tab:hover{color:var(--text)}
 .tab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
 .tab-content{display:none}
 .tab-content.active{display:block}
-.badge-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2)}
 #progress{display:none;padding:20px;text-align:center;color:var(--text2)}
 #progress .bar{width:100%;height:4px;background:var(--surface2);border-radius:2px;margin-top:12px;overflow:hidden}
 #progress .bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:2px;transition:width .3s}
@@ -68,7 +67,21 @@ tr:hover td{background:rgba(59,130,246,.04)}
 .filter-bar input,.filter-bar select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12px}
 .filter-bar input::placeholder{color:var(--text3)}
 .lazy-warn{font-size:11px;color:var(--text3);padding:4px 12px;font-style:italic}
-@media(max-width:768px){.container{padding:12px 16px}.upload-grid{grid-template-columns:1fr}.header{padding:12px 16px}}
+/* Settings */
+.settings-toggle{display:flex;align-items:center;gap:8px;padding:12px 20px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);border-top:1px solid var(--border);transition:color .2s}
+.settings-toggle:hover{color:var(--accent2)}
+.settings-toggle .arrow{transition:transform .2s;font-size:10px}
+.settings-toggle.open .arrow{transform:rotate(90deg)}
+.settings-panel{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
+.settings-panel.open{display:block}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding-top:16px}
+.setting-group{background:var(--surface2);border-radius:8px;padding:12px 14px}
+.setting-group .label{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.setting-row .l{font-size:12px;color:var(--text2)}
+.setting-row input{width:60px;background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:12px;text-align:center}
+.setting-row input:focus{outline:1px solid var(--accent)}.
+@media(max-width:768px){.container{padding:12px 16px}.upload-grid{grid-template-columns:1fr}.header{padding:12px 16px}.settings-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -91,7 +104,7 @@ tr:hover td{background:rgba(59,130,246,.04)}
         <input type="file" accept=".xlsx,.xls" onchange="handleFile(event,'sap')">
         <div class="icon">📦</div>
         <div style="font-size:13px;font-weight:600;margin-bottom:4px">SAP Open PO</div>
-        <div style="font-size:11px;color:var(--text3)">Columns A/B/I/N</div>
+        <div style="font-size:11px;color:var(--text3)">Sheet: Open PO / Data</div>
         <div class="name"></div>
       </div>
       <div class="upload-zone" id="zone-tracker">
@@ -121,9 +134,39 @@ tr:hover td{background:rgba(59,130,246,.04)}
       <div class="bar"><div class="bar-fill" id="barFill"></div></div>
     </div>
   </div>
+
+  <!-- Settings Toggle -->
+  <div class="settings-toggle" onclick="toggleSettings()">
+    <span class="arrow">▶</span> Threshold Settings — configure what makes a PO Critical / Urgent
+  </div>
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-grid">
+      <div class="setting-group">
+        <div class="label">LC Overdue</div>
+        <div class="setting-row"><span class="l">Critical ≥</span><input type="number" id="s-lc-crit" min="1" value="7" onchange="saveSettings();rerunPipeline()"></div>
+        <div class="setting-row"><span class="l">Urgent ≥</span><input type="number" id="s-lc-urg" min="1" value="3" onchange="saveSettings();rerunPipeline()"></div>
+      </div>
+      <div class="setting-group">
+        <div class="label">SI Overdue</div>
+        <div class="setting-row"><span class="l">Critical ≥</span><input type="number" id="s-si-crit" min="1" value="7" onchange="saveSettings();rerunPipeline()"></div>
+        <div class="setting-row"><span class="l">Urgent ≥</span><input type="number" id="s-si-urg" min="1" value="3" onchange="saveSettings();rerunPipeline()"></div>
+      </div>
+      <div class="setting-group">
+        <div class="label">ETA Overdue</div>
+        <div class="setting-row"><span class="l">Critical ≥</span><input type="number" id="s-eta-crit" min="1" value="14" onchange="saveSettings();rerunPipeline()"></div>
+        <div class="setting-row"><span class="l">Urgent ≥</span><input type="number" id="s-eta-urg" min="1" value="7" onchange="saveSettings();rerunPipeline()"></div>
+      </div>
+      <div class="setting-group">
+        <div class="label">ETA Probability</div>
+        <div class="setting-row"><span class="l">Critical ≤</span><input type="number" id="s-prob-crit" min="0" max="1" step="0.05" value="0.3" onchange="saveSettings();rerunPipeline()"></div>
+        <div class="setting-row"><span class="l">Urgent ≤</span><input type="number" id="s-prob-urg" min="0" max="1" step="0.05" value="0.5" onchange="saveSettings();rerunPipeline()"></div>
+        <div class="setting-row"><span class="l">Important ≤</span><input type="number" id="s-prob-imp" min="0" max="1" step="0.05" value="0.7" onchange="saveSettings();rerunPipeline()"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Dashboard Section -->
+<!-- Dashboard -->
 <div class="section" id="dashboardSection" style="display:none">
   <div class="section-title">
     Dashboard
@@ -134,14 +177,14 @@ tr:hover td{background:rgba(59,130,246,.04)}
   <div class="section-body">
     <div class="grid-4" id="statsGrid"></div>
   </div>
-  <div class="tabs" id="tabs">
+  <div class="tabs">
     <div class="tab active" data-tab="tab-table" onclick="switchTab('tab-table',this)">Master Data</div>
     <div class="tab" data-tab="tab-risk" onclick="switchTab('tab-risk',this)">Risk View</div>
     <div class="tab" data-tab="tab-quality" onclick="switchTab('tab-quality',this)">Quality Log</div>
   </div>
   <div class="tab-content active" id="tab-table">
     <div class="filter-bar">
-      <input placeholder="Search PO, material, country…" id="searchInput" oninput="renderTable()">
+      <input placeholder="Search PO, country, status…" id="searchInput" oninput="renderTable()">
       <select id="urgencyFilter" onchange="renderTable()">
         <option value="">All Urgencies</option>
         <option value="Critical">Critical</option>
@@ -151,10 +194,10 @@ tr:hover td{background:rgba(59,130,246,.04)}
       </select>
       <select id="visibilityFilter" onchange="renderTable()">
         <option value="">All Visibility</option>
-        <option value="Full Visibility">Full</option>
-        <option value="SAP + Tracker">SAP + Tracker</option>
-        <option value="SAP + Eagle Eye">SAP + Eagle Eye</option>
-        <option value="SAP Only">SAP Only</option>
+        <option value="In Tracker and Eagle Eye">In Tracker and Eagle Eye</option>
+        <option value="Tracker visible / shipment visibility not yet available">Tracker visible, no shipment</option>
+        <option value="Tracker not updated / shipment visible">Shipment visible, no tracker</option>
+        <option value="No Tracker or shipment visibility">No tracker or shipment</option>
       </select>
       <span class="lazy-warn" id="rowCount"></span>
     </div>
@@ -182,10 +225,10 @@ tr:hover td{background:rgba(59,130,246,.04)}
 </div>
 
 <script>
-// ============ DATA STORE ============
-const _data = {sap:[],tracker:[],eagle:[],pm:[],merged:[],quality:[]}
+// ===================== DATA STORE =====================
+const _data = {sap:[], tracker:[], eagle:[], pm:[], merged:[], quality:[]}
 
-// ============ FILE HANDLING ============
+// ===================== FILE HANDLING =====================
 function handleFile(ev,key){
   const f=ev.target.files[0]; if(!f)return
   document.querySelector(`#zone-${key} .name`).textContent=f.name
@@ -193,7 +236,6 @@ function handleFile(ev,key){
   const reader=new FileReader()
   reader.onload=function(e){
     const wb=XLSX.read(e.target.result,{type:'array'})
-    const sheets=wb.SheetNames
     switch(key){
       case 'sap': loadSAP(wb); break
       case 'tracker': loadTracker(wb); break
@@ -205,26 +247,34 @@ function handleFile(ev,key){
   reader.readAsArrayBuffer(f)
 }
 
-// ============ LOADERS ============
+// ===================== NORMALIZE PO (M-code: Text.Select + Text.Start 10) =====================
+function normalizePO(raw){
+  return String(raw).replace(/\D/g,'').slice(0,10)
+}
+
+// ===================== LOADERS =====================
 function loadSAP(wb){
   const sn=wb.SheetNames.includes('Open PO')?'Open PO':wb.SheetNames[0]
   const ws=wb.Sheets[sn]
   const rows=XLSX.utils.sheet_to_json(ws,{header:1})
-  const cols=[0,1,8,13] // A,B,I,N = 0,1,8,13
   const out=[]
   for(let i=1;i<rows.length;i++){
     const r=rows[i]; if(!r||r.length<14)continue
     const mat=String(r[0]||'').trim()
-    const po=String(r[2]||'').trim().replace(/\.0$/,'')
-    if(!mat||!po)continue
+    const desc=String(r[1]||'').trim()
+    const po=String(r[2]||'').trim()
     const qty=parseFloat(r[3])||0
-    if(po.startsWith('62'))continue
-    const po10=po.padStart(10,'0')
+    if(!mat||!po)continue
+    const poNorm=normalizePO(po)
+    if(!poNorm||poNorm.length!==10)continue
+    if(poNorm.startsWith('62'))continue
+    const agiKey=mat.replace(/^0+/,'')
     out.push({
-      material:mat, product_description:String(r[1]||'').trim(),
-      purchasing_document:po, open_qty:qty,
-      PO_10digit:po10, normalized_po:po10,
-      Material_Norm:mat.replace(/^0+/,'')
+      product_description:desc,
+      purchasing_document:po,
+      open_qty:qty,
+      normalized_po:poNorm,
+      agi_key:agiKey
     })
   }
   _data.sap=out
@@ -239,19 +289,23 @@ function loadTracker(wb){
     const os=String(r[0]||'').trim()
     if(!os)continue
     const rawPo=String(r[2]||'').trim()
-    const m=rawPo.match(/(\d{10})/)
-    if(!m)continue
-    const norm=m[1]
-    const shipM=rawPo.match(/-\s*(\d+)$/)
-    const shipNo=shipM?parseInt(shipM[1]):0
+    const poNorm=normalizePO(rawPo)
+    if(!poNorm||poNorm.length!==10)continue
+    let partialNo=null
+    const dashM=rawPo.match(/-\s*(\d+)$/)
+    if(dashM)partialNo=dashM[1]
     const p=(i)=>parseDate(r[i])
     out.push({
-      overall_status:os, normalized_po:norm,
-      partial_shipment_no:shipNo,
-      original_tracker_po:rawPo,
-      lc_date:p(11), si_shared_date:p(12),
-      tracker_rdd:p(13), tracker_etd:p(14), tracker_eta:p(15),
-      obl_ebl_received_date:p(17), final_docs_received_date:p(18)
+      tracker_overall_status:os,
+      normalized_po:poNorm,
+      partial_shipment_no:partialNo,
+      lc_date:p(11),
+      si_shared_date:p(12),
+      tracker_rdd:p(13),
+      tracker_etd:p(14),
+      tracker_eta:p(15),
+      obl_ebl_received_date:p(17),
+      final_docs_received_date:p(18)
     })
   }
   _data.tracker=out
@@ -262,22 +316,17 @@ function loadEagle(wb){
   const rows=XLSX.utils.sheet_to_json(ws,{header:1})
   const out=[]
   for(let i=1;i<rows.length;i++){
-    const r=rows[i]; if(!r||r.length<30)continue
+    const r=rows[i]; if(!r||r.length<22)continue
     const rawPo=String(r[2]||'').trim()
-    const norm=rawPo.replace(/\D/g,'').padStart(10,'0').slice(0,10)
-    if(norm.length!==10)continue
-    const p=(i)=>parseDate(r[i])
-    const probStr=String(r[20]||'').replace('-','')
-    const prob=probStr?parseFloat(probStr):null
+    const poNorm=normalizePO(rawPo)
+    if(!poNorm||poNorm.length!==10)continue
+    let eta=parseDate(r[19])
     out.push({
-      ddpo:rawPo, normalized_po:norm,
+      normalized_po:poNorm,
       container_no:String(r[6]||'').trim(),
-      tracking:String(r[7]||'').trim(),
-      status:String(r[8]||'').trim(),
-      atd:p(16), eta:p(19), ata:p(22),
-      eta_probability:prob,
-      eta_confidence:String(r[21]||'').trim(),
-      order_qty:(r[26]?parseFloat(r[26]):0)||0
+      tracking_link:String(r[7]||'').trim(),
+      shipment_status:String(r[8]||'').trim(),
+      eagle_eta:eta
     })
   }
   _data.eagle=out
@@ -286,28 +335,33 @@ function loadEagle(wb){
 function loadPM(wb){
   const ws=wb.Sheets['Master']; if(!ws){_data.pm=[];return}
   const rows=XLSX.utils.sheet_to_json(ws,{header:1})
+  const seen=new Set()
   const out=[]
-  // Col C=2 (AGI code), Col F=5 (Source Country)
   for(let i=1;i<rows.length;i++){
     const r=rows[i]; if(!r)continue
     const agiStr=String(r[2]||'').trim()
     if(!agiStr)continue
     const agi=parseInt(agiStr); if(isNaN(agi))continue
-    out.push({AGI_Code:agi,source_country:String(r[5]||'').trim()})
+    const agiKey=String(agi).replace(/^0+/,'')
+    if(seen.has(agiKey))continue
+    seen.add(agiKey)
+    out.push({
+      agi:agi,
+      agi_key:agiKey,
+      source_country_raw:String(r[5]||'').trim()
+    })
   }
   _data.pm=out
 }
 
-// ============ HELPERS ============
+// ===================== HELPERS =====================
 function parseDate(val){
   if(!val||val==='-')return null
   if(typeof val==='number'){
-    // Excel serial date
     const d=new Date((val-25569)*86400000)
     return isNaN(d.getTime())?null:d.toISOString().slice(0,10)
   }
   const d=new Date(val); if(!isNaN(d.getTime()))return d.toISOString().slice(0,10)
-  // Try parsing various text formats
   const parts=String(val).split(/[-\/]/)
   if(parts.length===3){
     let y=parseInt(parts[2]),m=parseInt(parts[1])-1,d=parseInt(parts[0])
@@ -318,127 +372,258 @@ function parseDate(val){
   return null
 }
 
-function today(){const d=new Date();return d.toISOString().slice(0,10)}
-function daysBetween(a,b){
-  if(!a||!b)return null
-  return Math.round((new Date(b)-new Date(a))/(86400000))
-}
-function daysAgo(d){
-  if(!d)return null
-  return Math.round((Date.now()-new Date(d))/(86400000))
+function daysAgo(d){if(!d)return null;return Math.round((Date.now()-new Date(d))/(86400000))}
+
+function esc(s){return s!=null?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+
+function loadSettings(){
+  try{
+    const s=JSON.parse(localStorage.getItem('ict_settings'))
+    if(s&&s.v===1)return s
+  }catch(e){}
+  return{v:1,lc_crit:7,lc_urg:3,si_crit:7,si_urg:3,eta_crit:14,eta_urg:7,prob_crit:0.3,prob_urg:0.5,prob_imp:0.7}
 }
 
-// ============ PROCESSING ============
+function saveSettings(){
+  const s=loadSettings()
+  s.lc_crit=parseFloat(document.getElementById('s-lc-crit').value)||7
+  s.lc_urg=parseFloat(document.getElementById('s-lc-urg').value)||3
+  s.si_crit=parseFloat(document.getElementById('s-si-crit').value)||7
+  s.si_urg=parseFloat(document.getElementById('s-si-urg').value)||3
+  s.eta_crit=parseFloat(document.getElementById('s-eta-crit').value)||14
+  s.eta_urg=parseFloat(document.getElementById('s-eta-urg').value)||7
+  s.prob_crit=parseFloat(document.getElementById('s-prob-crit').value)||0.3
+  s.prob_urg=parseFloat(document.getElementById('s-prob-urg').value)||0.5
+  s.prob_imp=parseFloat(document.getElementById('s-prob-imp').value)||0.7
+  localStorage.setItem('ict_settings',JSON.stringify(s))
+}
+
+function applySettingsToUI(){
+  const s=loadSettings()
+  document.getElementById('s-lc-crit').value=s.lc_crit
+  document.getElementById('s-lc-urg').value=s.lc_urg
+  document.getElementById('s-si-crit').value=s.si_crit
+  document.getElementById('s-si-urg').value=s.si_urg
+  document.getElementById('s-eta-crit').value=s.eta_crit
+  document.getElementById('s-eta-urg').value=s.eta_urg
+  document.getElementById('s-prob-crit').value=s.prob_crit
+  document.getElementById('s-prob-urg').value=s.prob_urg
+  document.getElementById('s-prob-imp').value=s.prob_imp
+}
+
+function toggleSettings(){
+  const sp=document.getElementById('settingsPanel')
+  const st=document.querySelector('.settings-toggle')
+  sp.classList.toggle('open')
+  st.classList.toggle('open')
+}
+applySettingsToUI()
+
+function getSettingsHash(){
+  const s=loadSettings()
+  return `${s.lc_crit}|${s.lc_urg}|${s.si_crit}|${s.si_urg}|${s.eta_crit}|${s.eta_urg}|${s.prob_crit}|${s.prob_urg}|${s.prob_imp}`
+}
+
+// ===================== PROCESSING (M-code aligned) =====================
+
+// Step 1: Cross-reference AGI (SAP → Product Master)
 function crossRefAGI(){
-  const agiMap={}; _data.pm.forEach(p=>{agiMap[p.AGI_Code]=p.source_country})
+  const agiMap={}
+  _data.pm.forEach(p=>{agiMap[p.agi_key]=p.source_country_raw})
   _data.sap.forEach(row=>{
-    const agi=parseInt(row.Material_Norm)
-    row.AGI_Code=isNaN(agi)?null:agi
-    row.source_country=agiMap[agi]||null
-    row.AGI_Matched=!!row.source_country
+    row.source_country_raw=agiMap[row.agi_key]||null
+    row.agi_matched=!!row.source_country_raw
+    // Also simplify source_country for display
+    row.source_country=row.source_country_raw
   })
 }
 
-function summarizeEagle(){
-  const map={}
-  _data.eagle.forEach(e=>{
-    const po=e.normalized_po
-    if(!map[po])map[po]={pos:[],containers:{},trackings:{},statuses:[],etas:[],probs:[]}
-    map[po].pos.push(po)
-    map[po].containers[e.container_no]=true
-    if(e.tracking)map[po].trackings[e.tracking]=true
-    const sm=e.status.match(/(\d+)/)
-    if(sm)map[po].statuses.push(parseInt(sm[1]))
-    if(e.eta)map[po].etas.push(e.eta)
-    if(e.eta_probability!=null)map[po].probs.push(e.eta_probability)
-  })
-  const out={}
-  Object.keys(map).forEach(po=>{
-    const g=map[po]
-    const st=g.statuses.length?Math.max(...g.statuses):0
-    const etas=g.etas.filter(Boolean).sort()
-    const pros=g.probs.filter(p=>p!=null)
-    out[po]={
-      container_count:Object.keys(g.containers).length,
-      container_list:Object.keys(g.containers).join(', '),
-      tracking_link_list:Object.keys(g.trackings).join(', '),
-      current_shipment_status:String(st),
-      shipment_eta:etas[0]||null,
-      min_eta_probability:pros.length?Math.min(...pros):null,
-      max_eta_probability:pros.length?Math.max(...pros):null
-    }
-  })
-  return out
-}
+// Step 2: Build BD_Tracker_PO_Summary + expand detail rows (matching M-code structure)
+function buildTrackerSummaryAndExpand(){
 
-function mergeAll(){
-  const eagleSum=summarizeEagle()
-  const merge={}
-  // Build SAP lookup
-  _data.sap.forEach(row=>{
-    const po=row.normalized_po
-    if(!merge[po])merge[po]={...row}
-  })
-  // Merge Tracker
-  const tMap={}
+  // Group by PO → BD_Tracker_PO_Summary
+  const groups={}
   _data.tracker.forEach(t=>{
     const po=t.normalized_po
-    if(!tMap[po])tMap[po]=t
+    if(!groups[po])groups[po]=[]
+    groups[po].push(t)
   })
-  Object.keys(tMap).forEach(po=>{
-    if(!merge[po])merge[po]={normalized_po:po}
-    Object.assign(merge[po],tMap[po])
-    merge[po].tracker_found=true
+
+  // Build summary per PO + keep detail rows for expansion
+  const summaryMap={}
+  Object.keys(groups).forEach(po=>{
+    const rows=groups[po]
+    // Aggregate dates (matching M-code grouping)
+    const dates=rows.map(r=>({
+      lc:r.lc_date, si:r.si_shared_date, rdd:r.tracker_rdd,
+      etd:r.tracker_etd, eta:r.tracker_eta, obl:r.obl_ebl_received_date,
+      final:r.final_docs_received_date
+    }))
+    const first=(a)=>a.filter(Boolean).sort()[0]||null
+    const last=(a)=>a.filter(Boolean).sort().reverse()[0]||null
+    summaryMap[po]={
+      normalized_po:po,
+      partial_shipment_count:rows.length,
+      first_lc_date:first(dates.map(d=>d.lc)),
+      latest_si_shared_date:last(dates.map(d=>d.si)),
+      earliest_tracker_rdd:first(dates.map(d=>d.rdd)),
+      earliest_tracker_etd:first(dates.map(d=>d.etd)),
+      earliest_tracker_eta:first(dates.map(d=>d.eta)),
+      latest_obl_ebl_received_date:last(dates.map(d=>d.obl)),
+      latest_final_docs_received_date:last(dates.map(d=>d.final)),
+      tracker_detail_rows:rows // keep for expansion
+    }
   })
-  // Merge Eagle summary
-  Object.keys(eagleSum).forEach(po=>{
-    if(!merge[po])merge[po]={normalized_po:po}
-    Object.assign(merge[po],eagleSum[po])
-    merge[po].eagle_eye_found=true
-  })
-  // Fill defaults
-  Object.values(merge).forEach(row=>{
-    if(row.tracker_found===undefined)row.tracker_found=false
-    if(row.eagle_eye_found===undefined)row.eagle_eye_found=false
-    // Visibility
-    if(!row.tracker_found&&!row.eagle_eye_found)row.data_visibility_status='SAP Only'
-    else if(row.tracker_found&&!row.eagle_eye_found)row.data_visibility_status='SAP + Tracker'
-    else if(!row.tracker_found&&row.eagle_eye_found)row.data_visibility_status='SAP + Eagle Eye'
-    else row.data_visibility_status='Full Visibility'
-  })
-  return Object.values(merge).sort((a,b)=>a.normalized_po.localeCompare(b.normalized_po))
+  return summaryMap
 }
 
-function evaluateRisk(row){
-  const thr={lc_crit:7,lc_urg:3,si_crit:7,si_urg:3,eta_crit:14,eta_urg:7,prob_crit:.3,prob_urg:.5,prob_imp:.7}
+// Step 3: Build Eagle_Eye_PO_Summary + keep detail rows
+function buildEagleSummaryAndExpand(){
+  const groups={}
+  _data.eagle.forEach(e=>{
+    const po=e.normalized_po
+    if(!groups[po])groups[po]=[]
+    groups[po].push(e)
+  })
+  const summaryMap={}
+  Object.keys(groups).forEach(po=>{
+    const rows=groups[po]
+    const etas=rows.map(r=>r.eagle_eta).filter(Boolean).sort()
+    summaryMap[po]={
+      normalized_po:po,
+      container_count:rows.length,
+      earliest_eagle_eta:etas[0]||null,
+      eagle_detail_rows:rows
+    }
+  })
+  return summaryMap
+}
+
+// Step 4: Build Active_Import_Master (full pipeline)
+function buildMaster(){
+  const settings=loadSettings()
+
+  // Start with SAP rows (these are the base)
+  const rows=[]
+
+  // For each SAP row, join with tracker summary
+  const tSumMap=buildTrackerSummaryAndExpand()
+  const eSumMap=buildEagleSummaryAndExpand()
+
+  _data.sap.forEach(sapRow=>{
+    const po=sapRow.normalized_po
+    const tSum=tSumMap[po]
+    const eSum=eSumMap[po]
+
+    // Determine partial_shipment_count and container_count for visibility
+    const partialCount=tSum?tSum.partial_shipment_count:null
+    const containerCount=eSum?eSum.container_count:null
+
+    // Visibility labels (matching M-code exactly)
+    let vis
+    if(partialCount===null&&containerCount===null) vis='No Tracker or shipment visibility'
+    else if(partialCount===null) vis='Tracker not updated / shipment visible'
+    else if(containerCount===null) vis='Tracker visible / shipment visibility not yet available'
+    else vis='In Tracker and Eagle Eye'
+
+    // Expand eagle_detail_rows → container-level output
+    const eagleDetailRows=eSum?eSum.eagle_detail_rows:[{container_no:null,tracking_link:null,shipment_status:null,eagle_eta:null}]
+
+    eagleDetailRows.forEach(eRow=>{
+      const base={
+        // Fields from SAP (removing material and original_sap_po as M-code does)
+        purchasing_document:sapRow.purchasing_document,
+        product_description:sapRow.product_description,
+        open_qty:sapRow.open_qty,
+        normalized_po:po,
+        agi_key:sapRow.agi_key,
+        source_country_raw:sapRow.source_country_raw,
+        source_country:sapRow.source_country || '',
+        agi_matched:sapRow.agi_matched,
+
+        // Fields from Tracker Summary
+        partial_shipment_count:partialCount,
+        first_lc_date:tSum?tSum.first_lc_date:null,
+        latest_si_shared_date:tSum?tSum.latest_si_shared_date:null,
+        earliest_tracker_rdd:tSum?tSum.earliest_tracker_rdd:null,
+        earliest_tracker_etd:tSum?tSum.earliest_tracker_etd:null,
+        earliest_tracker_eta:tSum?tSum.earliest_tracker_eta:null,
+        latest_obl_ebl_received_date:tSum?tSum.latest_obl_ebl_received_date:null,
+        latest_final_docs_received_date:tSum?tSum.latest_final_docs_received_date:null,
+
+        // Fields from Eagle Summary
+        container_count:containerCount,
+        earliest_eagle_eta:eSum?eSum.earliest_eagle_eta:null,
+
+        // Fields from expanded Eagle detail
+        container_no:eRow.container_no&&eRow.container_no!=='-'?eRow.container_no:null,
+        tracking_link:eRow.tracking_link&&eRow.tracking_link!=='-'?eRow.tracking_link:null,
+        shipment_status:eRow.shipment_status||null,
+        eagle_eta:eRow.eagle_eta,
+
+        // Fields from expanded Tracker detail (use first partial shipment as default)
+        tracker_overall_status:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].tracker_overall_status:null,
+        lc_date:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].lc_date:null,
+        si_shared_date:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].si_shared_date:null,
+        tracker_rdd:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].tracker_rdd:null,
+        tracker_etd:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].tracker_etd:null,
+        tracker_eta:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].tracker_eta:null,
+        obl_ebl_received_date:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].obl_ebl_received_date:null,
+        final_docs_received_date:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].final_docs_received_date:null,
+        partial_shipment_no:tSum&&tSum.tracker_detail_rows.length?tSum.tracker_detail_rows[0].partial_shipment_no:null,
+
+        data_visibility_status:vis
+      }
+
+      // Evaluate risk on this row
+      rows.push(evaluateRisk(base,settings))
+    })
+  })
+
+  return rows.sort((a,b)=>a.normalized_po.localeCompare(b.normalized_po))
+}
+
+// ===================== RISK EVALUATION =====================
+function evaluateRisk(row,settings){
+  const thr=settings||loadSettings()
   const exc=[]
-  if(!row.tracker_found)exc.push('No Tracker Entry')
-  if(!row.eagle_eye_found)exc.push('No Eagle Eye Entry')
-  const lc=row.lc_date,si=row.si_shared_date,eta=row.tracker_eta
-  const statusNum=row.current_shipment_status?parseInt(row.current_shipment_status)||0:0
+
+  // Check visibility-based exceptions
+  if(row.partial_shipment_count===null)exc.push('No Tracker Entry')
+  if(row.container_count===null)exc.push('No Eagle Eye Entry')
+
+  // Check overdue dates
+  const lc=row.first_lc_date||row.lc_date
+  const si=row.latest_si_shared_date||row.si_shared_date
+  const eta=row.earliest_tracker_eta||row.tracker_eta
+  const statusNum=row.shipment_status?parseInt(row.shipment_status.replace(/\D/g,''))||0:0
+
   if(lc&&!si){
     const d=daysAgo(lc); if(d!==null&&d>0&&d>=thr.lc_crit)exc.push(`LC Overdue (${d}d)`)
+    else if(d!==null&&d>0&&d>=thr.lc_urg)exc.push(`LC Overdue (${d}d)`)
   }
   if(si&&statusNum<6){
     const d=daysAgo(si); if(d!==null&&d>0&&d>=thr.si_crit)exc.push(`SI Overdue (${d}d)`)
+    else if(d!==null&&d>0&&d>=thr.si_urg)exc.push(`SI Overdue (${d}d)`)
   }
   if(eta&&statusNum<6){
     const d=daysAgo(eta); if(d!==null&&d>0&&d>=thr.eta_crit)exc.push(`ETA Overdue (${d}d)`)
+    else if(d!==null&&d>0&&d>=thr.eta_urg)exc.push(`ETA Overdue (${d}d)`)
   }
-  const prob=row.max_eta_probability
-  if(prob!=null&&statusNum<4){
-    if(prob<=thr.prob_crit)exc.push(`Low ETA Probability (${Math.round(prob*100)}%)`)
-  }
+
   if(!exc.length)exc.push('On Track')
+
   row.all_exceptions=exc.join('; ')
-  row.primary_exception=exc[0].split(' (')[0].trim()
+  const primary=exc[0].split(' (')[0].trim()
+
   // Urgency map
-  const uMap={'No Tracker Entry':'Critical','LC Overdue':'Critical','SI Overdue':'Critical','ETA Overdue':'Critical','No Eagle Eye Entry':'Urgent','Low ETA Probability':'Urgent','On Track':'Normal'}
-  row.urgency=uMap[row.primary_exception]||'Important'
-  const oMap={'No Tracker Entry':'Planning Manager','LC Overdue':'Supply Chain','SI Overdue':'Supply Chain','ETA Overdue':'Imports Team','No Eagle Eye Entry':'Planning Manager','Low ETA Probability':'Imports Team','On Track':'Planning Manager'}
-  row.recommended_owner=oMap[row.primary_exception]||'Planning Manager'
-  const aMap={'No Tracker Entry':'Create tracker entry for PO','LC Overdue':'Follow up on LC issuance','SI Overdue':'Follow up on SI submission','ETA Overdue':'Expedite shipment tracking','No Eagle Eye Entry':'Add PO to Eagle Eye monitoring','Low ETA Probability':'Review contingency plan','On Track':'Monitor regularly'}
-  row.recommended_next_action=aMap[row.primary_exception]||'Review'
+  const uMap={'No Tracker Entry':'Critical','LC Overdue':'Critical','SI Overdue':'Critical','ETA Overdue':'Critical','No Eagle Eye Entry':'Urgent','On Track':'Normal'}
+  row.primary_exception=primary
+  row.urgency=uMap[primary]||'Important'
+  const oMap={'No Tracker Entry':'Planning Manager','LC Overdue':'Supply Chain','SI Overdue':'Supply Chain','ETA Overdue':'Imports Team','No Eagle Eye Entry':'Planning Manager','On Track':'Planning Manager'}
+  row.recommended_owner=oMap[primary]||'Planning Manager'
+  const aMap={'No Tracker Entry':'Create tracker entry for PO','LC Overdue':'Follow up on LC issuance','SI Overdue':'Follow up on SI submission','ETA Overdue':'Expedite shipment tracking','No Eagle Eye Entry':'Add PO to Eagle Eye monitoring','On Track':'Monitor regularly'}
+  row.recommended_next_action=aMap[primary]||'Review'
   return row
 }
 
@@ -447,36 +632,33 @@ function buildQualityLog(){
   const sap=_data.sap, tracker=_data.tracker, eagle=_data.eagle, pm=_data.pm
   if(!sap.length)issues.push({source:'SAP',severity:'Error',issue:'SAP file empty',detail:'No PO data'})
   else{
-    const matched=sap.filter(r=>r.AGI_Matched).length
+    const matched=sap.filter(r=>r.agi_matched).length
     const unmatched=sap.length-matched
     if(unmatched>0){
-      const mats=sap.filter(r=>!r.AGI_Matched).map(r=>r.material).slice(0,20)
-      issues.push({source:'SAP → Product Master',severity:'Warning',issue:`${unmatched}/${sap.length} materials unmatched to AGI`,detail:`Unmatched: ${mats.join(', ')}${unmatched>20?'...':''}`})
+      issues.push({source:'SAP → Product Master',severity:'Warning',issue:`${unmatched}/${sap.length} materials unmatched`,detail:`${unmatched} SAP materials have no Product Master AGI match`})
     }
     const noSrc=sap.filter(r=>!r.source_country).length
     if(noSrc>0)issues.push({source:'SAP',severity:'Warning',issue:`${noSrc} PO rows no Source Country`,detail:'Lead time rules cannot resolve'})
     const zeroQty=sap.filter(r=>r.open_qty===0).length
-    if(zeroQty>0)issues.push({source:'SAP',severity:'Info',issue:`${zeroQty} PO rows zero open qty`,detail:'Fully delivered but open?'})
+    if(zeroQty>0)issues.push({source:'SAP',severity:'Info',issue:`${zeroQty} PO rows zero open qty`,detail:'Fully delivered but still open?'})
   }
   if(!tracker.length)issues.push({source:'Tracker',severity:'Warning',issue:'Tracker empty',detail:'No milestone data'})
   else{
     const sapPos=new Set(sap.map(r=>r.normalized_po))
     const tPos=new Set(tracker.map(r=>r.normalized_po))
     const orphan=[...tPos].filter(p=>!sapPos.has(p))
-    if(orphan.length)issues.push({source:'Tracker',severity:'Info',issue:`${orphan.length} POs in Tracker not in SAP`,detail:'Historical or non-import POs'})
+    if(orphan.length)issues.push({source:'Tracker',severity:'Info',issue:`${orphan.length} POs in Tracker not in SAP`,detail:'May be historical or non-import POs'})
   }
   if(!eagle.length)issues.push({source:'Eagle Eye',severity:'Warning',issue:'Eagle Eye empty',detail:'No shipment tracking'})
   else{
     const sapPos=new Set(sap.map(r=>r.normalized_po))
     const ePos=new Set(eagle.map(r=>r.normalized_po))
     const orphan=[...ePos].filter(p=>!sapPos.has(p))
-    if(orphan.length)issues.push({source:'Eagle Eye',severity:'Info',issue:`${orphan.length} POs in Eagle Eye not in SAP`,detail:'Completed or non-import'})
-    const noProb=eagle.filter(r=>r.eta_probability==null||isNaN(r.eta_probability)).length
-    if(noProb>0&&noProb<eagle.length)issues.push({source:'Eagle Eye',severity:'Info',issue:`${noProb}/${eagle.length} rows missing ETA probability`,detail:'Risk assessment limited'})
+    if(orphan.length)issues.push({source:'Eagle Eye',severity:'Info',issue:`${orphan.length} POs in Eagle Eye not in SAP`,detail:'May be completed or non-import'})
   }
   if(!pm.length)issues.push({source:'Product Master',severity:'Error',issue:'Product Master empty',detail:'AGI mapping unavailable'})
   else{
-    const countries=[...new Set(pm.map(r=>r.source_country).filter(Boolean))]
+    const countries=[...new Set(pm.map(r=>r.source_country_raw).filter(Boolean))]
     issues.push({source:'Product Master',severity:'Info',issue:`${pm.length} products loaded`,detail:`Countries: ${countries.join(', ')}`})
   }
   _data.quality=issues
@@ -485,38 +667,43 @@ function buildQualityLog(){
 function runPipeline(){
   document.getElementById('progress').style.display='block'
   const bar=document.getElementById('barFill')
-
-  setTimeout(()=>{bar.style.width='20%';crossRefAGI()},50)
+  bar.style.width='10%'
   setTimeout(()=>{
-    bar.style.width='50%'
-    _data.merged=mergeAll()
-    _data.merged.forEach(row=>evaluateRisk(row))
+    bar.style.width='30%'
+    crossRefAGI()
+    bar.style.width='60%'
+    _data.merged=buildMaster()
+    bar.style.width='85%'
     buildQualityLog()
     bar.style.width='100%'
-    setTimeout(renderDashboard,200)
-  },100)
+    setTimeout(renderDashboard,150)
+  },50)
 }
 
-// ============ RENDER ============
+function rerunPipeline(){
+  if(_data.sap.length&&_data.tracker.length&&_data.eagle.length&&_data.pm.length) runPipeline()
+}
+
+// ===================== RENDER =====================
 function renderDashboard(){
   document.getElementById('progress').style.display='none'
   document.getElementById('dashboardSection').style.display='block'
   const m=_data.merged
-  document.getElementById('poCount').textContent=m.length+' POs'
-  // Stats
+  const uniquePos=new Set(m.map(r=>r.normalized_po))
+  document.getElementById('poCount').textContent=uniquePos.size+' POs'
   const critical=m.filter(r=>r.urgency==='Critical').length
   const urgent=m.filter(r=>r.urgency==='Urgent').length
   const normal=m.filter(r=>r.urgency==='Normal').length
-  const fullVis=m.filter(r=>r.data_visibility_status==='Full Visibility').length
-  const agiMatched=m.filter(r=>r.AGI_Matched).length
+  const important=m.filter(r=>r.urgency==='Important').length
+  const fullVis=m.filter(r=>r.data_visibility_status==='In Tracker and Eagle Eye').length
+  const agiMatched=m.filter(r=>r.agi_matched).length
   document.getElementById('statsGrid').innerHTML=
-    `<div class="stat-card"><div class="label">Total POs</div><div class="value">${m.length}</div></div>
+    `<div class="stat-card"><div class="label">Total POs</div><div class="value">${uniquePos.size}</div></div>
+    <div class="stat-card"><div class="label">Rows (container-level)</div><div class="value">${m.length}</div></div>
     <div class="stat-card"><div class="label">Critical</div><div class="value" style="color:var(--red)">${critical}</div></div>
     <div class="stat-card"><div class="label">Urgent</div><div class="value" style="color:var(--orange)">${urgent}</div></div>
     <div class="stat-card"><div class="label">On Track</div><div class="value" style="color:var(--green)">${normal}</div></div>
-    <div class="stat-card"><div class="label">Full Visibility</div><div class="value">${fullVis}</div></div>
-    <div class="stat-card"><div class="label">AGI Matched</div><div class="value">${agiMatched}/${m.length}</div></div>`
-  // Populate owner filter
+    <div class="stat-card"><div class="label">In Tracker + Eagle Eye</div><div class="value">${fullVis}</div></div>`
   const owners=[...new Set(m.map(r=>r.recommended_owner).filter(Boolean))]
   document.getElementById('riskOwnerFilter').innerHTML=`<option value="">All Owners</option>${owners.map(o=>`<option value="${o}">${o}</option>`).join('')}`
   renderTable()
@@ -532,13 +719,12 @@ function renderTable(){
   const filtered=m.filter(r=>{
     if(uf&&r.urgency!==uf)return false
     if(vf&&r.data_visibility_status!==vf)return false
-    if(q&&![r.normalized_po,r.material,r.source_country,r.primary_exception,r.recommended_owner].some(f=>f&&String(f).toLowerCase().includes(q)))return false
+    if(q&&![r.normalized_po,r.source_country,r.primary_exception,r.recommended_owner,r.product_description].some(f=>f&&String(f).toLowerCase().includes(q)))return false
     return true
   })
-  document.getElementById('rowCount').textContent=`${filtered.length} of ${m.length} rows`
+  document.getElementById('rowCount').textContent=`${filtered.length} of ${m.length} rows (${new Set(filtered.map(r=>r.normalized_po)).size} unique POs)`
   const cols=[
     {k:'normalized_po',l:'PO'},
-    {k:'material',l:'Material'},
     {k:'product_description',l:'Description'},
     {k:'source_country',l:'Source Country'},
     {k:'open_qty',l:'Open Qty'},
@@ -547,24 +733,30 @@ function renderTable(){
     {k:'recommended_owner',l:'Owner'},
     {k:'recommended_next_action',l:'Action'},
     {k:'data_visibility_status',l:'Visibility'},
-    {k:'lc_date',l:'LC Date'},
-    {k:'si_shared_date',l:'SI Date'},
-    {k:'tracker_eta',l:'ETA'},
-    {k:'current_shipment_status',l:'EE Status'},
-    {k:'max_eta_probability',l:'ETA Prob'},
-    {k:'container_count',l:'Containers'}
+    {k:'first_lc_date',l:'LC Date'},
+    {k:'latest_si_shared_date',l:'SI Date'},
+    {k:'earliest_tracker_eta',l:'ETA (Tracker)'},
+    {k:'eagle_eta',l:'ETA (Eagle)'},
+    {k:'shipment_status',l:'EE Status'},
+    {k:'container_no',l:'Container'},
+    {k:'container_count',l:'# Containers'}
   ]
   document.getElementById('tableHead').innerHTML=`<tr>${cols.map(c=>`<th>${c.l}</th>`).join('')}</tr>`
   document.getElementById('tableBody').innerHTML=filtered.map(r=>{
-    const prob=r.max_eta_probability!=null?Math.round(r.max_eta_probability*100)+'%':''
-    return `<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.material)}</td><td>${esc(r.product_description)}</td>
+    return `<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.product_description)}</td>
     <td>${esc(r.source_country)}</td><td>${r.open_qty!=null?r.open_qty:''}</td>
     <td><span class="status-badge status-${r.urgency||'Normal'}">${esc(r.urgency||'Normal')}</span></td>
     <td>${esc(r.primary_exception)}</td><td>${esc(r.recommended_owner)}</td><td>${esc(r.recommended_next_action)}</td>
-    <td>${esc(r.data_visibility_status)}</td><td>${esc(r.lc_date||'')}</td><td>${esc(r.si_shared_date||'')}</td>
-    <td>${esc(r.tracker_eta||'')}</td><td>${esc(r.current_shipment_status||'')}</td>
-    <td>${prob}</td><td>${r.container_count!=null?r.container_count:''}</td></tr>`
+    <td>${esc(abbrevVis(r.data_visibility_status))}</td><td>${esc(r.first_lc_date||r.lc_date||'')}</td>
+    <td>${esc(r.latest_si_shared_date||r.si_shared_date||'')}</td><td>${esc(r.earliest_tracker_eta||r.tracker_eta||'')}</td>
+    <td>${esc(r.eagle_eta||'')}</td><td>${esc(r.shipment_status||'')}</td>
+    <td>${esc(r.container_no||'')}</td><td>${r.container_count!=null?r.container_count:''}</td></tr>`
   }).join('')
+}
+
+function abbrevVis(v){
+  const m={'In Tracker and Eagle Eye':'Tracker+Eagle','Tracker visible / shipment visibility not yet available':'Tracker Only','Tracker not updated / shipment visible':'Eagle Only','No Tracker or shipment visibility':'None'}
+  return m[v]||v
 }
 
 function renderRiskView(){
@@ -578,11 +770,11 @@ function renderRiskView(){
   })
   const wrap=document.getElementById('riskTableWrap')
   if(!filtered.length){wrap.innerHTML='<div style="padding:20px;color:var(--text3)">No matching records</div>';return}
-  wrap.innerHTML=`<table><thead><tr><th>PO</th><th>Material</th><th>Country</th><th>Urgency</th><th>Exception</th><th>Owner</th><th>Action</th><th>Visibility</th></tr></thead>
-  <tbody>${filtered.map(r=>`<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.material)}</td><td>${esc(r.source_country)}</td>
+  wrap.innerHTML=`<table><thead><tr><th>PO</th><th>Description</th><th>Country</th><th>Urgency</th><th>Exception</th><th>Owner</th><th>Action</th><th>Visibility</th></tr></thead>
+  <tbody>${filtered.map(r=>`<tr><td>${esc(r.normalized_po)}</td><td>${esc(r.product_description)}</td><td>${esc(r.source_country)}</td>
   <td><span class="status-badge status-${r.urgency||'Normal'}">${esc(r.urgency||'Normal')}</span></td>
   <td>${esc(r.primary_exception)}</td><td>${esc(r.recommended_owner)}</td><td>${esc(r.recommended_next_action)}</td>
-  <td>${esc(r.data_visibility_status)}</td></tr>`).join('')}</tbody></table>`
+  <td>${esc(abbrevVis(r.data_visibility_status))}</td></tr>`).join('')}</tbody></table>`
 }
 
 function renderQualityLog(){
@@ -605,57 +797,35 @@ function switchTab(id,el){
   if(id==='tab-quality')renderQualityLog()
 }
 
-// ============ DOWNLOAD ============
+// ===================== DOWNLOAD =====================
 function downloadMasterData(){
   const m=_data.merged
-  if(!m.length){alert('No data to download. Please upload all 4 files first.');return}
-  const cols=[
-    'normalized_po','PO_10digit','material','Material_Norm','product_description',
-    'open_qty','source_country','AGI_Code','AGI_Matched',
-    'original_tracker_po','overall_status','lc_date','si_shared_date',
+  if(!m.length){alert('No data. Upload all 4 files first.');return}
+  const hdr=[
+    'normalized_po','product_description','open_qty','source_country_raw','agi_matched',
+    'partial_shipment_count','first_lc_date','latest_si_shared_date',
+    'earliest_tracker_rdd','earliest_tracker_etd','earliest_tracker_eta',
+    'latest_obl_ebl_received_date','latest_final_docs_received_date',
+    'container_count','earliest_eagle_eta',
+    'container_no','tracking_link','shipment_status','eagle_eta',
+    'tracker_overall_status','lc_date','si_shared_date',
     'tracker_rdd','tracker_etd','tracker_eta',
     'obl_ebl_received_date','final_docs_received_date','partial_shipment_no',
-    'container_count','container_list','tracking_link_list',
-    'current_shipment_status','shipment_eta','min_eta_probability','max_eta_probability',
-    'tracker_found','eagle_eye_found','data_visibility_status',
+    'data_visibility_status',
     'all_exceptions','primary_exception','urgency','recommended_owner','recommended_next_action'
   ]
-  // Header row
-  const hdr=['PO_10digit','Material','Description','Open Qty','Source Country','AGI Code','AGI Matched',
-    'Tracker PO','Overall Status','LC Date','SI Date','RDD','ETD','ETA',
-    'OBL Date','Docs Date','Partial Ship',
-    'Containers','Container List','Tracking Links',
-    'EE Status','EE ETA','Min ETA Prob','Max ETA Prob',
-    'Tracker Found','Eagle Eye Found','Visibility',
-    'Exceptions','Primary Exception','Urgency','Recommended Owner','Recommended Action']
   const rows=[hdr]
   m.forEach(r=>{
-    rows.push([
-      r.normalized_po||'',r.material||'',r.product_description||'',
-      r.open_qty!=null?r.open_qty:'',r.source_country||'',
-      r.AGI_Code!=null?r.AGI_Code:'',r.AGI_Matched?'Yes':'No',
-      r.original_tracker_po||'',r.overall_status||'',r.lc_date||'',r.si_shared_date||'',
-      r.tracker_rdd||'',r.tracker_etd||'',r.tracker_eta||'',
-      r.obl_ebl_received_date||'',r.final_docs_received_date||'',
-      r.partial_shipment_no!=null?r.partial_shipment_no:'',
-      r.container_count!=null?r.container_count:'',r.container_list||'',r.tracking_link_list||'',
-      r.current_shipment_status||'',r.shipment_eta||'',
-      r.min_eta_probability!=null?r.min_eta_probability:'',
-      r.max_eta_probability!=null?r.max_eta_probability:'',
-      r.tracker_found?'Yes':'No',r.eagle_eye_found?'Yes':'No',r.data_visibility_status||'',
-      r.all_exceptions||'',r.primary_exception||'',r.urgency||'',r.recommended_owner||'',r.recommended_next_action||''
-    ])
+    rows.push(hdr.map(k=>{
+      const v=r[k]; return v!=null?String(v):''
+    }))
   })
   const ws=XLSX.utils.aoa_to_sheet(rows)
-  // Column widths
-  ws['!cols']=[{wch:12},{wch:10},{wch:30},{wch:12},{wch:20},{wch:10},{wch:10},{wch:15},{wch:15},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:10},{wch:25},{wch:30},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:10},{wch:12},{wch:40},{wch:20},{wch:12},{wch:20},{wch:30}]
+  ws['!cols']=hdr.map(h=>({wch:h.length<6?12:Math.min(h.length+3,30)}))
   const wb=XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb,ws,'Master Data')
-  const dt=new Date().toISOString().slice(0,10)
-  XLSX.writeFile(wb,`Import_Control_Tower_Master_Data_${dt}.xlsx`)
+  XLSX.writeFile(wb,`Import_Control_Tower_Master_Data_${new Date().toISOString().slice(0,10)}.xlsx`)
 }
-
-function esc(s){return s!=null?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
 </script>
 </body>
 </html>
