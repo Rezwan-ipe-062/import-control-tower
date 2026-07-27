@@ -566,7 +566,8 @@ function loadEagle(wb){
   for(let i=1;i<rows.length;i++){
     const r=rows[i];if(!r||r.length<22)continue;const rawPo=String(r[2]||'').trim();const poNorm=normalizePO(rawPo)
     if(!poNorm||poNorm.length!==10)continue
-    out.push({normalized_po:poNorm,container_no:String(r[6]||'').trim(),tracking_link:String(r[7]||'').trim(),shipment_status:String(r[8]||'').trim(),eagle_eta:parseDate(r[19])})
+    const prob=parseFloat(String(r[20]||'').replace(/[^0-9.]/g,''))
+    out.push({normalized_po:poNorm,container_no:String(r[6]||'').trim(),tracking_link:String(r[7]||'').trim(),shipment_status:String(r[8]||'').trim(),eagle_eta:parseDate(r[19]),eta_probability:isNaN(prob)?null:prob})
   }
   _data.eagle=out
 }
@@ -685,7 +686,7 @@ function buildMaster(){
       rows.push(evaluateRisk({
         purchasing_document:sapRow.purchasing_document,product_description:sapRow.product_description,open_qty:sapRow.open_qty,normalized_po:po,source_country_raw:sapRow.source_country_raw,source_country:sapRow.source_country||'',agi_matched:sapRow.agi_matched,
         partial_shipment_count:pc,first_lc_date:ts?ts.first_lc_date:null,latest_si_shared_date:ts?ts.latest_si_shared_date:null,earliest_tracker_rdd:ts?ts.earliest_tracker_rdd:null,earliest_tracker_etd:ts?ts.earliest_tracker_etd:null,earliest_tracker_eta:ts?ts.earliest_tracker_eta:null,latest_obl_ebl_received_date:ts?ts.latest_obl_ebl_received_date:null,latest_final_docs_received_date:ts?ts.latest_final_docs_received_date:null,
-        container_count:cc,earliest_eagle_eta:es?es.earliest_eagle_eta:null,container_no:eRow.container_no&&eRow.container_no!=='-'?eRow.container_no:null,tracking_link:eRow.tracking_link&&eRow.tracking_link!=='-'?eRow.tracking_link:null,shipment_status:eRow.shipment_status||null,eagle_eta:eRow.eagle_eta,
+        container_count:cc,earliest_eagle_eta:es?es.earliest_eagle_eta:null,container_no:eRow.container_no&&eRow.container_no!=='-'?eRow.container_no:null,tracking_link:eRow.tracking_link&&eRow.tracking_link!=='-'?eRow.tracking_link:null,shipment_status:eRow.shipment_status||null,eagle_eta:eRow.eagle_eta,eta_probability:eRow.eta_probability,
         tracker_overall_status:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_overall_status:null,lc_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].lc_date:null,si_shared_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].si_shared_date:null,tracker_rdd:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_rdd:null,tracker_etd:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_etd:null,tracker_eta:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_eta:null,obl_ebl_received_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].obl_ebl_received_date:null,final_docs_received_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].final_docs_received_date:null,partial_shipment_no:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].partial_shipment_no:null,
         data_visibility_status:vis
       },settings))
@@ -703,13 +704,20 @@ function evaluateRisk(row,settings){
   if(lc&&!si){const d=daysAgo(lc);if(d!==null&&d>0){if(d>=thr.lc_crit)exc.push(`LC Overdue (${d}d)`);else if(d>=thr.lc_urg)exc.push(`LC Overdue (${d}d)`)}}
   if(si&&statusNum<6){const d=daysAgo(si);if(d!==null&&d>0){if(d>=thr.si_crit)exc.push(`SI Overdue (${d}d)`);else if(d>=thr.si_urg)exc.push(`SI Overdue (${d}d)`)}}
   if(eta&&statusNum<6){const d=daysAgo(eta);if(d!==null&&d>0){if(d>=thr.eta_crit)exc.push(`ETA Overdue (${d}d)`);else if(d>=thr.eta_urg)exc.push(`ETA Overdue (${d}d)`)}}
+  if(row.eta_probability!==null&&row.eta_probability<=thr.prob_crit)exc.push('Low ETA Probability')
+  else if(row.eta_probability!==null&&row.eta_probability<=thr.prob_urg)exc.push('Low ETA Probability')
+  else if(row.eta_probability!==null&&row.eta_probability<=thr.prob_imp)exc.push('Low ETA Probability')
   if(!exc.length)exc.push('On Track')
   row.all_exceptions=exc.join('; ');const primary=exc[0].split(' (')[0].trim();row.primary_exception=primary
-  const u={'No Tracker Entry':'Critical','LC Overdue':'Critical','SI Overdue':'Critical','ETA Overdue':'Critical','No Eagle Eye Entry':'Urgent','On Track':'Normal'}
-  row.urgency=u[primary]||'Important'
-  const o={'No Tracker Entry':'Planning Manager','LC Overdue':'Supply Chain','SI Overdue':'Supply Chain','ETA Overdue':'Imports Team','No Eagle Eye Entry':'Planning Manager','On Track':'Planning Manager'}
+  let urg='Important'
+  if(primary==='No Tracker Entry'||primary==='LC Overdue'||primary==='SI Overdue'||primary==='ETA Overdue')urg='Critical'
+  else if(primary==='No Eagle Eye Entry')urg='Urgent'
+  else if(primary==='Low ETA Probability'){if(row.eta_probability<=thr.prob_crit)urg='Critical';else if(row.eta_probability<=thr.prob_urg)urg='Urgent';else urg='Important'}
+  else if(primary==='On Track')urg='Normal'
+  row.urgency=urg
+  const o={'No Tracker Entry':'Planning Manager','LC Overdue':'Supply Chain','SI Overdue':'Supply Chain','ETA Overdue':'Imports Team','Low ETA Probability':'Planning Manager','No Eagle Eye Entry':'Planning Manager','On Track':'Planning Manager'}
   row.recommended_owner=o[primary]||'Planning Manager'
-  const a={'No Tracker Entry':'Create tracker entry for PO','LC Overdue':'Follow up on LC issuance','SI Overdue':'Follow up on SI submission','ETA Overdue':'Expedite shipment tracking','No Eagle Eye Entry':'Add PO to Eagle Eye monitoring','On Track':'Monitor regularly'}
+  const a={'No Tracker Entry':'Create tracker entry for PO','LC Overdue':'Follow up on LC issuance','SI Overdue':'Follow up on SI submission','ETA Overdue':'Expedite shipment tracking','Low ETA Probability':'Review shipment risk','No Eagle Eye Entry':'Add PO to Eagle Eye monitoring','On Track':'Monitor regularly'}
   row.recommended_next_action=a[primary]||'Review'
   return row
 }
