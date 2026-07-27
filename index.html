@@ -578,7 +578,7 @@ function loadPM(wb){
     const r=rows[i];if(!r)continue;const agiStr=String(r[2]||'').trim()
     if(!agiStr)continue;const agi=parseInt(agiStr);if(isNaN(agi))continue
     const agiKey=String(agi).replace(/^0+/,'');if(seen.has(agiKey))continue;seen.add(agiKey)
-    out.push({agi:agi,agi_key:agiKey,source_country_raw:String(r[5]||'').trim()})
+    out.push({agi:agi,agi_key:agiKey,entity:String(r[0]||'').trim(),product_type:String(r[1]||'').trim(),pm_description:String(r[3]||'').trim(),source_country_raw:String(r[5]||'').trim()})
   }
   _data.pm=out
 }
@@ -646,8 +646,13 @@ function daysAgo(d){if(!d)return null;return Math.round((Date.now()-new Date(d))
 function esc(s){return s!=null?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
 
 function crossRefAGI(){
-  const agiMap={};_data.pm.forEach(p=>{agiMap[p.agi_key]=p.source_country_raw})
-  _data.sap.forEach(r=>{r.source_country_raw=agiMap[r.agi_key]||null;r.source_country=r.source_country_raw;r.agi_matched=!!r.source_country_raw})
+  const pmMap={};_data.pm.forEach(p=>{pmMap[p.agi_key]=p})
+  _data.sap.forEach(r=>{
+    const pm=pmMap[r.agi_key]
+    if(pm){r.source_country_raw=pm.source_country_raw;r.entity=pm.entity;r.product_type=pm.product_type;r.agi_matched=true}
+    else{r.source_country_raw=null;r.entity=null;r.product_type=null;r.agi_matched=false}
+    r.source_country=r.source_country_raw
+  })
 }
 
 function buildTrackerSummary(){
@@ -684,7 +689,7 @@ function buildMaster(){
     const edr=es?es.eagle_detail_rows:[{container_no:null,tracking_link:null,shipment_status:null,eagle_eta:null,eta_probability:null}]
     edr.forEach(eRow=>{
       rows.push(evaluateRisk({
-        purchasing_document:sapRow.purchasing_document,product_description:sapRow.product_description,open_qty:sapRow.open_qty,normalized_po:po,source_country_raw:sapRow.source_country_raw,source_country:sapRow.source_country||'',agi_matched:sapRow.agi_matched,
+        purchasing_document:sapRow.purchasing_document,product_description:sapRow.product_description,open_qty:sapRow.open_qty,normalized_po:po,source_country_raw:sapRow.source_country_raw,source_country:sapRow.source_country||'',agi_key:sapRow.agi_key,agi_matched:sapRow.agi_matched,entity:sapRow.entity,product_type:sapRow.product_type,
         partial_shipment_count:pc,first_lc_date:ts?ts.first_lc_date:null,latest_si_shared_date:ts?ts.latest_si_shared_date:null,earliest_tracker_rdd:ts?ts.earliest_tracker_rdd:null,earliest_tracker_etd:ts?ts.earliest_tracker_etd:null,earliest_tracker_eta:ts?ts.earliest_tracker_eta:null,latest_obl_ebl_received_date:ts?ts.latest_obl_ebl_received_date:null,latest_final_docs_received_date:ts?ts.latest_final_docs_received_date:null,
         container_count:cc,earliest_eagle_eta:es?es.earliest_eagle_eta:null,container_no:eRow.container_no&&eRow.container_no!=='-'?eRow.container_no:null,tracking_link:eRow.tracking_link&&eRow.tracking_link!=='-'?eRow.tracking_link:null,shipment_status:eRow.shipment_status||null,eagle_eta:eRow.eagle_eta,eta_probability:eRow.eta_probability,
         tracker_overall_status:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_overall_status:null,lc_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].lc_date:null,si_shared_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].si_shared_date:null,tracker_rdd:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_rdd:null,tracker_etd:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_etd:null,tracker_eta:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].tracker_eta:null,obl_ebl_received_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].obl_ebl_received_date:null,final_docs_received_date:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].final_docs_received_date:null,partial_shipment_no:ts&&ts.tracker_detail_rows.length?ts.tracker_detail_rows[0].partial_shipment_no:null,
@@ -793,7 +798,7 @@ function autoReGenerate(){if(_generatedOnce&&_filesReady===4)runPipeline()}
 /* ===================== DOWNLOAD ===================== */
 function downloadMasterData(){
   const m=_data.merged;if(!m.length){alert('Generate master data first.');return}
-  const hdr=['normalized_po','product_description','open_qty','source_country_raw','agi_matched','partial_shipment_count','first_lc_date','latest_si_shared_date','earliest_tracker_rdd','earliest_tracker_etd','earliest_tracker_eta','latest_obl_ebl_received_date','latest_final_docs_received_date','container_count','earliest_eagle_eta','container_no','tracking_link','shipment_status','eagle_eta','tracker_overall_status','lc_date','si_shared_date','tracker_rdd','tracker_etd','tracker_eta','obl_ebl_received_date','final_docs_received_date','partial_shipment_no','data_visibility_status','all_exceptions','primary_exception','urgency','recommended_owner','recommended_next_action']
+  const hdr=['normalized_po','product_description','open_qty','source_country_raw','entity','product_type','agi_key','agi_matched','partial_shipment_count','first_lc_date','latest_si_shared_date','earliest_tracker_rdd','earliest_tracker_etd','earliest_tracker_eta','latest_obl_ebl_received_date','latest_final_docs_received_date','container_count','earliest_eagle_eta','container_no','tracking_link','shipment_status','eagle_eta','tracker_overall_status','lc_date','si_shared_date','tracker_rdd','tracker_etd','tracker_eta','obl_ebl_received_date','final_docs_received_date','partial_shipment_no','data_visibility_status','all_exceptions','primary_exception','urgency','recommended_owner','recommended_next_action']
   const rows=[hdr];m.forEach(r=>rows.push(hdr.map(k=>{const v=r[k];return v!=null?String(v):''})))
   const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=hdr.map(h=>({wch:Math.min(h.length+3,30)}))
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Master Data')
