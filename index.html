@@ -681,7 +681,7 @@ function buildMaster(){
     else if(pc===null)vis='Tracker not updated / shipment visible'
     else if(cc===null)vis='Tracker visible / shipment visibility not yet available'
     else vis='In Tracker and Eagle Eye'
-    const edr=es?es.eagle_detail_rows:[{container_no:null,tracking_link:null,shipment_status:null,eagle_eta:null}]
+    const edr=es?es.eagle_detail_rows:[{container_no:null,tracking_link:null,shipment_status:null,eagle_eta:null,eta_probability:null}]
     edr.forEach(eRow=>{
       rows.push(evaluateRisk({
         purchasing_document:sapRow.purchasing_document,product_description:sapRow.product_description,open_qty:sapRow.open_qty,normalized_po:po,source_country_raw:sapRow.source_country_raw,source_country:sapRow.source_country||'',agi_matched:sapRow.agi_matched,
